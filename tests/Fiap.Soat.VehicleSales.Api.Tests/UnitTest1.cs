@@ -1,4 +1,4 @@
-﻿namespace Fiap.Soat.VehicleSales.Api.Tests;
+namespace Fiap.Soat.VehicleSales.Api.Tests;
 
 public class Tests
 {
