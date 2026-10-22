@@ -1,7 +1,7 @@
 services:
-  mysqldb:
+  vehicle-sales-db:
     image: mysql:8.4
-    container_name: fiap-mysql
+    container_name: vehicle-sales-db
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -23,7 +23,7 @@ services:
     image: flyway/flyway
     container_name: fiap-mysql-migration
     command:
-      - "-url=jdbc:mysql://mysqldb:${MYSQL_PORT}/${MYSQL_DATABASE}?allowPublicKeyRetrieval=true&useSSL=false"
+      - "-url=jdbc:mysql://vehicle-sales-db:${MYSQL_PORT}/${MYSQL_DATABASE}?allowPublicKeyRetrieval=true&useSSL=false"
       - "-user=${MYSQL_USER}"
       - "-password=${MYSQL_PASSWORD}"
       - "-connectRetries=60"
@@ -31,7 +31,7 @@ services:
     volumes:
       - ./database/migrations:/flyway/sql
     depends_on:
-      mysqldb:
+      vehicle-sales-db:
         condition: service_healthy
     networks:
       - fiap-network
@@ -58,8 +58,46 @@ services:
       timeout: 5s
       retries: 5
 
+  vehicle-management-api:
+    image: ${DOCKERHUB_USERNAME}/fiap-soat-vehicle-management-api:latest
+    container_name: vehicle-management-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      ASPNETCORE_URLS: ${ASPNETCORE_URLS}
+      ConnectionStrings__MySql: "server=vehicle-management-db;port=3306;database=fiap_soat_vehicle_management;user=${MYSQL_USER};password=${MYSQL_PASSWORD};SslMode=none;AllowPublicKeyRetrieval=True;"
+    ports:
+      - "5180:8080"
+    depends_on:
+      vehicle-management-db:
+        condition: service_healthy
+    networks:
+      - fiap-network
+
+  vehicle-management-db:
+    image: mysql:8.4
+    container_name: vehicle-management-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: fiap_soat_vehicle_management
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/vehicle-management:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - fiap-network
+
 volumes:
   mysql_data_dev:
+  mysql_data:
   rabbitmq_data:
 
 networks:

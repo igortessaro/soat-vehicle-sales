@@ -1,7 +1,6 @@
 using FluentResults;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
-using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json.Serialization;
 
 namespace Fiap.Soat.VehicleSales.Domain.Shared;

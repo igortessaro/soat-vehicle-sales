@@ -4,7 +4,7 @@ namespace Fiap.Soat.VehicleSales.Application.Models;
 
 public record SaleDetail(
     Guid Id,
-    string VehicleId,
+    Guid VehicleId,
     string BuyerDocument,
     SaleStatus Status,
     string PaymentCode,

@@ -6,15 +6,15 @@ public sealed class Sale : Entity
 {
     private Sale() { }
 
-    public Sale(string vehicleId, string buyerDocument, string paymentCode)
+    public Sale(Guid vehicleId, string buyerDocument)
     {
         VehicleId = vehicleId;
         BuyerDocument = buyerDocument;
-        PaymentCode = paymentCode;
+        PaymentCode = Guid.NewGuid().ToString("N");
     }
 
-    public string VehicleId { get; private set; }
-    public string BuyerDocument { get; private set; }
+    public Guid VehicleId { get; private set; }
+    public Document BuyerDocument { get; private set; }
     public SaleStatus Status { get; private set; } = SaleStatus.PendingPayment;
     public string PaymentCode { get; private set; }
     public DateTime? PaidAt { get; private set; }

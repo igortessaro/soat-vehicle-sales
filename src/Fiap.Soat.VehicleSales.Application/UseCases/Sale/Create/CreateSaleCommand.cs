@@ -3,5 +3,5 @@ using MediatR;
 
 namespace Fiap.Soat.VehicleSales.Application.UseCases.Sale.Create;
 
-public record CreateSaleCommand(string VehicleId, string BuyerDocument, string PaymentCode)
+public record CreateSaleCommand(Guid VehicleId, string BuyerDocument)
     : IRequest<Response<VehicleSales.Domain.Entities.Sale>>;

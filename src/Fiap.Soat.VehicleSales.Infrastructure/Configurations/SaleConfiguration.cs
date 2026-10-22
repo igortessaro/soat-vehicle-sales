@@ -8,7 +8,7 @@ public sealed class SaleConfiguration : IEntityTypeConfiguration<Sale>
 {
     public void Configure(EntityTypeBuilder<Sale> builder)
     {
-        builder.ToTable("vehicles");
+        builder.ToTable("sales");
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id)
@@ -25,11 +25,20 @@ public sealed class SaleConfiguration : IEntityTypeConfiguration<Sale>
             .HasColumnName("updated_at")
             .IsRequired();
 
-        builder.Property(x => x.BuyerDocument)
-            .HasColumnName("buyer_document")
-            .HasColumnType("VARCHAR(50)")
-            .HasMaxLength(50)
+        builder.Property(x => x.VehicleId)
+            .HasColumnName("vehicle_id")
+            .HasColumnType("CHAR(36)")
+            .HasMaxLength(36)
             .IsRequired();
+
+        builder.OwnsOne(x => x.BuyerDocument, document =>
+        {
+            document.Property(x => x.Value)
+                .HasColumnName("buyer_document")
+                .HasColumnType("VARCHAR(50)")
+                .HasMaxLength(50)
+                .IsRequired();
+        });
 
         builder.Property(x => x.Status)
             .HasColumnName("status")
@@ -38,11 +47,11 @@ public sealed class SaleConfiguration : IEntityTypeConfiguration<Sale>
             .HasMaxLength(30)
             .IsRequired();
 
-
         builder.Property(x => x.PaymentCode)
             .HasColumnName("payment_code")
             .HasColumnType("VARCHAR(100)")
-            .HasMaxLength(100);
+            .HasMaxLength(100)
+            .IsRequired();
 
         builder.Property(x => x.PaidAt)
             .HasColumnType("datetime(6)")
