@@ -1,0 +1,165 @@
+name: .NET CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
+      - 'release/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: true
+  CONFIGURATION: Release
+
+jobs:
+  build_unit:
+    name: Build & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+            dotnet-version: 10.0.x
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+      - name: Restore
+        run: dotnet restore
+      - name: Code Format (verify)
+        run: dotnet format --verify-no-changes
+      - name: Build
+        run: dotnet build --no-restore -c $CONFIGURATION
+      - name: Unit Tests with coverage
+        run: |
+          dotnet test tests/Fiap.Soat.VehicleSales.Api.Tests/Fiap.Soat.VehicleSales.Api.Tests.csproj \
+            -c $CONFIGURATION --no-build
+          dotnet test tests/Fiap.Soat.VehicleSales.Infrastructure.Tests/Fiap.Soat.VehicleSales.Infrastructure.Tests.csproj \
+            -c $CONFIGURATION --no-build
+          dotnet test tests/Fiap.Soat.VehicleSales.Application.Tests/Fiap.Soat.VehicleSales.Application.Tests.csproj \
+            -c $CONFIGURATION --no-build
+          dotnet test tests/Fiap.Soat.VehicleSales.Domain.Tests/Fiap.Soat.VehicleSales.Domain.Tests.csproj \
+            -c $CONFIGURATION --no-build
+
+  integration_tests:
+    name: Integration Tests
+    if: ${{ github.event_name == 'pull_request' }}
+    needs: build_unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore
+        run: dotnet restore
+      - name: Run integration tests
+        run: dotnet test tests/Fiap.Soat.VehicleSales.Integration.Tests/Fiap.Soat.VehicleSales.Integration.Tests.csproj -c $CONFIGURATION --verbosity normal
+
+  sonar:
+    name: SonarCloud
+    if: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+    needs: build_unit
+    runs-on: windows-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: zulu
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Cache SonarQube Cloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~\sonar\cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: Cache SonarQube Cloud scanner
+        id: cache-sonar-scanner
+        uses: actions/cache@v4
+        with:
+          path: .\.sonar\scanner
+          key: ${{ runner.os }}-sonar-scanner
+          restore-keys: ${{ runner.os }}-sonar-scanner
+      - name: Install Sonar Scanner
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: powershell
+        run: |
+          New-Item -Path .\.sonar\scanner -ItemType Directory -Force
+          dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
+      - name: Build and analyze
+        shell: powershell
+        run: |
+          .\.sonar\scanner\dotnet-sonarscanner begin `
+            /k:"igortessaro_fiap-soat-oficina-mecanica" `
+            /o:"igortessaro" `
+            /d:sonar.token="$env:SONAR_TOKEN" `
+            /d:sonar.host.url="https://sonarcloud.io" `
+            /d:sonar.cs.opencover.reportsPaths="coverage/**/*.xml" `
+            /d:sonar.coverage.exclusions="**Tests/**,**Integration.Tests/**,**/Configurations/**,**/Migrations/**" `
+            /d:sonar.exclusions="**/*.sql,**/*Designer.cs"
+          dotnet build --no-incremental
+          dotnet test tests/Fiap.Soat.VehicleSales.Domain.Tests/Fiap.Soat.VehicleSales.Domain.Tests.csproj --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage --settings coverlet.runsettings
+          dotnet test tests/Fiap.Soat.VehicleSales.Application.Tests/Fiap.Soat.VehicleSales.Application.Tests.csproj --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage --settings coverlet.runsettings
+          dotnet test tests/Fiap.Soat.VehicleSales.Infrastructure.Tests/Fiap.Soat.VehicleSales.Infrastructure.Tests.csproj --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage --settings coverlet.runsettings
+          dotnet test tests/Fiap.Soat.VehicleSales.Api.Tests/Fiap.Soat.VehicleSales.Api.Tests.csproj --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage --settings coverlet.runsettings
+
+          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
+
+  docker_api_publish:
+    name: API | Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: build_unit
+    env:
+      DOCKERHUB_USERNAME: igortessaro
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKERHUB_REPOSITORY_NAME: fiap-soat-vehicle-sales-api
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
+
+      - name: Build and push API Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ github.workspace }}
+          file: ./Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY_NAME }}:latest
