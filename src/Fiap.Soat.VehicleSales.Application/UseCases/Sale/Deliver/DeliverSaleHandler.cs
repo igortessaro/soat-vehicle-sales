@@ -13,7 +13,7 @@ public sealed class DeliverSaleHandler(ISaleRepository repository, IVehicleManag
         var sale = await repository.GetByIdAsync(request.SaleId, cancellationToken);
         if (sale is null) return Response<Domain.Entities.Sale>.Fail($"Sale with id {request.SaleId} not found");
 
-        var vehicleResponse = await vehicleManagementService.ReserveVehicleAsync(sale.VehicleId, cancellationToken);
+        var vehicleResponse = await vehicleManagementService.DeliverVehicleAsync(sale.VehicleId, cancellationToken);
         if (!vehicleResponse.IsSuccess) return Response<Domain.Entities.Sale>.Fail(vehicleResponse.Reasons[0].Message);
 
         await repository.UpdateAsync(sale.Deliver(), cancellationToken);

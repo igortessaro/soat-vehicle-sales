@@ -83,6 +83,29 @@ public sealed class VehicleManagementService(
         return ResponseFactory.Ok(result.Data);
     }
 
+    public async Task<Response<VehicleDetail>> DeliverVehicleAsync(Guid vehicleId, CancellationToken cancellationToken = default)
+    {
+        using var httpClient = httpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(configuration[VehicleManagementBaseUrlConfigKey] ?? throw new InvalidOperationException("VehicleManagement:BaseUrl not configured"));
+        var response = await httpClient.PostAsync($"/api/v1/internal/vehicles/{vehicleId}/deliver", null, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            logger.LogError("Failed to deliver vehicle {VehicleId}. Status code: {StatusCode}", vehicleId, response.StatusCode);
+            return ResponseFactory.Fail<VehicleDetail>($"Failed to deliver vehicle. Error: {response.ReasonPhrase}");
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<ApiResponse<VehicleDetail>>(cancellationToken);
+        if (result == null) return ResponseFactory.Fail<VehicleDetail>($"Vehicle {vehicleId} not found");
+
+        if (!result.IsSuccess)
+        {
+            logger.LogError("Failed to deliver vehicle {VehicleId}. Reasons: {Reasons}", vehicleId, string.Join(", ", result.Reasons));
+            return ResponseFactory.Fail<VehicleDetail>(string.Join(", ", result.Reasons));
+        }
+
+        return ResponseFactory.Ok(result.Data);
+    }
+
     public async Task<Response<VehicleDetail>> GetAsync(Guid vehicleId, CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateClient();
