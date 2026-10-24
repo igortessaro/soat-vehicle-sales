@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Fiap.Soat.VehicleSales.Api.Endpoints;
 
-public class VehiclesEndpoints
+public static class VehiclesEndpoints
 {
     public static WebApplication Map(WebApplication app)
     {

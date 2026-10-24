@@ -12,6 +12,7 @@ public static class Bootstrap
     {
         _ = serviceCollection.AddScoped<ISaleController, SaleController>();
         _ = serviceCollection.AddScoped<IVehicleController, VehicleController>();
+        _ = serviceCollection.AddScoped<IWebhookController, WebhookController>();
         return serviceCollection;
     }
 

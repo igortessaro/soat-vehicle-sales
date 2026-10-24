@@ -19,4 +19,18 @@ public sealed class Sale : Entity
     public string PaymentCode { get; private set; }
     public DateTime? PaidAt { get; private set; }
     public DateTime? CanceledAt { get; private set; }
+
+    public Sale Paid()
+    {
+        Status = SaleStatus.Paid;
+        PaidAt = DateTime.UtcNow;
+        return this;
+    }
+
+    public Sale Canceled()
+    {
+        Status = SaleStatus.Canceled;
+        CanceledAt = DateTime.UtcNow;
+        return this;
+    }
 }

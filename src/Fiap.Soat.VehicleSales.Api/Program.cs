@@ -83,6 +83,7 @@ _ = app.MapHealthChecks("/health", new HealthCheckOptions
 
 _ = SaleEndpoints.Map(app);
 _ = VehiclesEndpoints.Map(app);
+_ = WebhookEndpoints.Map(app);
 
 await app.RunAsync();
 
