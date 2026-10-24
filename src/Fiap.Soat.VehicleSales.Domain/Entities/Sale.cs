@@ -33,4 +33,10 @@ public sealed class Sale : Entity
         CanceledAt = DateTime.UtcNow;
         return this;
     }
+
+    public Sale Deliver()
+    {
+        Status = SaleStatus.Completed;
+        return this;
+    }
 }

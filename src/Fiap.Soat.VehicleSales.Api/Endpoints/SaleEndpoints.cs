@@ -20,6 +20,11 @@ public static class SaleEndpoints
             .WithName("CreateSale")
             .WithDescription("Create a new sale");
 
+        salesApi.MapPut("{id:guid}/deliver", ([FromServices] ISaleController controller, [FromRoute] Guid id, CancellationToken cancellationToken) =>
+                controller.DeliverAsync(id, cancellationToken))
+            .WithName("DeliverSale")
+            .WithDescription("Deliver a sale by id");
+
         return app;
     }
 }
