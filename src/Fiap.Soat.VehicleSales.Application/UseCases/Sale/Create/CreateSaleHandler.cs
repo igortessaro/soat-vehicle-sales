@@ -6,7 +6,7 @@ using MediatR;
 
 namespace Fiap.Soat.VehicleSales.Application.UseCases.Sale.Create;
 
-public sealed class CreateVehicleHandler(ISaleRepository repository, IVehicleManagementService vehicleManagementService)
+public sealed class CreateSaleHandler(ISaleRepository repository, IVehicleManagementService vehicleManagementService)
     : IRequestHandler<CreateSaleCommand, Response<VehicleSales.Domain.Entities.Sale>>
 {
     public async Task<Response<VehicleSales.Domain.Entities.Sale>> Handle(CreateSaleCommand request, CancellationToken cancellationToken)

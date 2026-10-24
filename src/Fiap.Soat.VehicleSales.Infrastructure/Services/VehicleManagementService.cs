@@ -12,10 +12,12 @@ public sealed class VehicleManagementService(
     IHttpClientFactory httpClientFactory,
     IConfiguration configuration) : IVehicleManagementService
 {
+    private const string VehicleManagementBaseUrlConfigKey = "VehicleManagement:BaseUrl";
+
     public async Task<Response<VehicleDetail>> ReserveVehicleAsync(Guid vehicleId, CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(configuration["VehicleManagement:BaseUrl"] ?? throw new InvalidOperationException("VehicleManagement:BaseUrl not configured"));
+        httpClient.BaseAddress = new Uri(configuration[VehicleManagementBaseUrlConfigKey] ?? throw new InvalidOperationException("VehicleManagement:BaseUrl not configured"));
         var response = await httpClient.PostAsync($"/api/v1/internal/vehicles/{vehicleId}/reserve", null, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
@@ -38,7 +40,7 @@ public sealed class VehicleManagementService(
     public async Task<Response<VehicleDetail>> ReleaseVehicleAsync(Guid vehicleId, CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(configuration["VehicleManagement:BaseUrl"] ?? throw new InvalidOperationException("VehicleManagement:BaseUrl not configured"));
+        httpClient.BaseAddress = new Uri(configuration[VehicleManagementBaseUrlConfigKey] ?? throw new InvalidOperationException("VehicleManagement:BaseUrl not configured"));
         var response = await httpClient.PostAsync($"/api/v1/internal/vehicles/{vehicleId}/release", null, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
@@ -61,7 +63,7 @@ public sealed class VehicleManagementService(
     public async Task<Response<VehicleDetail>> SellVehicleAsync(Guid vehicleId, CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(configuration["VehicleManagement:BaseUrl"] ?? throw new InvalidOperationException("VehicleManagement:BaseUrl not configured"));
+        httpClient.BaseAddress = new Uri(configuration[VehicleManagementBaseUrlConfigKey] ?? throw new InvalidOperationException("VehicleManagement:BaseUrl not configured"));
         var response = await httpClient.PostAsync($"/api/v1/internal/vehicles/{vehicleId}/sell", null, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
@@ -81,15 +83,10 @@ public sealed class VehicleManagementService(
         return ResponseFactory.Ok(result.Data);
     }
 
-    public Task<Response<IReadOnlyList<VehicleDetail>>> ListVehiclesAsync(ListVehicleQuery query, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task<Response<VehicleDetail>> GetAsync(Guid vehicleId, CancellationToken cancellationToken = default)
     {
         using var httpClient = httpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(configuration["VehicleManagement:BaseUrl"] ?? throw new InvalidOperationException("VehicleManagement:BaseUrl not configured"));
+        httpClient.BaseAddress = new Uri(configuration[VehicleManagementBaseUrlConfigKey] ?? throw new InvalidOperationException("VehicleManagement:BaseUrl not configured"));
         var response = await httpClient.GetAsync($"/api/v1/vehicles/{vehicleId}", cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
@@ -107,6 +104,29 @@ public sealed class VehicleManagementService(
         }
 
         return ResponseFactory.Ok(result.Data);
+    }
+
+    public Task<Response<IReadOnlyList<VehicleDetail>>> GetAllAvailableAsync(CancellationToken cancellationToken = default) =>
+        GetAllVehiclesAsync("available", cancellationToken);
+
+    public Task<Response<IReadOnlyList<VehicleDetail>>> GetAllSoldAsync(CancellationToken cancellationToken = default) =>
+        GetAllVehiclesAsync("sold", cancellationToken);
+
+    private async Task<Response<IReadOnlyList<VehicleDetail>>> GetAllVehiclesAsync(string status, CancellationToken cancellationToken = default)
+    {
+        using var httpClient = httpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(configuration[VehicleManagementBaseUrlConfigKey] ?? throw new InvalidOperationException("VehicleManagement:BaseUrl not configured"));
+        var response = await httpClient.GetAsync($"/api/v1/vehicles/{status}", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            logger.LogError("Failed to get all {Status} vehicles. Status code: {StatusCode}", status, response.StatusCode);
+            return ResponseFactory.Fail<IReadOnlyList<VehicleDetail>>($"Failed to get vehicle. Error: {response.ReasonPhrase}");
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<ApiResponse<IReadOnlyList<VehicleDetail>>>(cancellationToken);
+        return result == null ?
+            ResponseFactory.Ok<IReadOnlyList<VehicleDetail>>(new List<VehicleDetail>()) :
+            ResponseFactory.Ok<IReadOnlyList<VehicleDetail>>(result.Data);
     }
 }
 

@@ -82,6 +82,7 @@ _ = app.MapHealthChecks("/health", new HealthCheckOptions
 });
 
 _ = SaleEndpoints.Map(app);
+_ = VehiclesEndpoints.Map(app);
 
 await app.RunAsync();
 

@@ -11,6 +11,7 @@ public static class Bootstrap
     public static IServiceCollection AddInterfaceAdapters(this IServiceCollection serviceCollection)
     {
         _ = serviceCollection.AddScoped<ISaleController, SaleController>();
+        _ = serviceCollection.AddScoped<IVehicleController, VehicleController>();
         return serviceCollection;
     }
 
