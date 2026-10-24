@@ -1,83 +1,140 @@
 services:
-  vehicle-sales-db:
+  vehicle-management-db:
     image: mysql:8.4
-    container_name: vehicle-sales-db
+    container_name: vehicle-management-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MANAGEMENT_MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${MANAGEMENT_MYSQL_DATABASE:-fiap_soat_vehicle_management}
+      MYSQL_USER: ${MANAGEMENT_MYSQL_USER:-vehicle_user}
+      MYSQL_PASSWORD: ${MANAGEMENT_MYSQL_PASSWORD:-vehicle_pass}
     ports:
-      - "${MYSQL_PORT}:3306"
+      - "${MANAGEMENT_MYSQL_PORT:-3307}:3306"
     volumes:
-      - mysql_data_dev:/var/lib/mysql
+      - vehicle_management_mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$${MANAGEMENT_MYSQL_ROOT_PASSWORD:-root_password}"]
       timeout: 20s
       retries: 10
     networks:
       - fiap-network
 
-  flyway:
-    image: flyway/flyway
-    container_name: fiap-mysql-migration
+  vehicle-management-migrations:
+    image: flyway/flyway:latest
     command:
-      - "-url=jdbc:mysql://vehicle-sales-db:${MYSQL_PORT}/${MYSQL_DATABASE}?allowPublicKeyRetrieval=true&useSSL=false"
-      - "-user=${MYSQL_USER}"
-      - "-password=${MYSQL_PASSWORD}"
+      - "-url=jdbc:mysql://vehicle-management-db:3306/${MANAGEMENT_MYSQL_DATABASE:-fiap_soat_vehicle_management}?allowPublicKeyRetrieval=true&useSSL=false"
+      - "-user=${MANAGEMENT_MYSQL_USER:-vehicle_user}"
+      - "-password=${MANAGEMENT_MYSQL_PASSWORD:-vehicle_pass}"
       - "-connectRetries=60"
       - "migrate"
     volumes:
-      - ./database/migrations:/flyway/sql
-    depends_on:
-      vehicle-sales-db:
-        condition: service_healthy
-    networks:
-      - fiap-network
-
-  vehicle-management-api:
-    image: ${DOCKERHUB_USERNAME}/fiap-soat-vehicle-management-api:latest
-    container_name: vehicle-management-api
-    restart: unless-stopped
-    environment:
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
-      ASPNETCORE_URLS: ${ASPNETCORE_URLS}
-      ConnectionStrings__MySql: "server=vehicle-management-db;port=3306;database=fiap_soat_vehicle_management;user=${MYSQL_USER};password=${MYSQL_PASSWORD};SslMode=none;AllowPublicKeyRetrieval=True;"
-    ports:
-      - "5180:8080"
+      - ../soat-vehicle-management/database/migrations:/flyway/sql:ro
     depends_on:
       vehicle-management-db:
         condition: service_healthy
     networks:
       - fiap-network
 
-  vehicle-management-db:
-    image: mysql:8.4
-    container_name: vehicle-management-db
+  vehicle-management-api:
+    image: ${DOCKERHUB_USERNAME:-igortessaro}/fiap-soat-vehicle-management-api:latest
+    container_name: vehicle-management-api
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: fiap_soat_vehicle_management
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__MySql: "server=vehicle-management-db;port=3306;database=${MANAGEMENT_MYSQL_DATABASE:-fiap_soat_vehicle_management};user=${MANAGEMENT_MYSQL_USER:-vehicle_user};password=${MANAGEMENT_MYSQL_PASSWORD:-vehicle_pass};SslMode=None;AllowPublicKeyRetrieval=True;"
     ports:
-      - "3307:3306"
+      - "${VEHICLE_MANAGEMENT_API_PORT:-5180}:8080"
+    depends_on:
+      vehicle-management-db:
+        condition: service_healthy
+      vehicle-management-migrations:
+        condition: service_completed_successfully
+    networks:
+      - fiap-network
+
+  vehicle-sales-db:
+    image: mysql:8.4
+    container_name: vehicle-sales-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-fiap_soat_vehicle_sales}
+      MYSQL_USER: ${MYSQL_USER:-vehicle_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-vehicle_pass}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./database/vehicle-management:/docker-entrypoint-initdb.d:ro
+      - vehicle_sales_mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$${MYSQL_ROOT_PASSWORD:-root_password}"]
       timeout: 20s
       retries: 10
     networks:
       - fiap-network
 
-volumes:
-  mysql_data_dev:
-  mysql_data:
-  rabbitmq_data:
+  vehicle-sales-migrations:
+    image: flyway/flyway:latest
+    command:
+      - "-url=jdbc:mysql://vehicle-sales-db:3306/${MYSQL_DATABASE:-fiap_soat_vehicle_sales}?allowPublicKeyRetrieval=true&useSSL=false"
+      - "-user=${MYSQL_USER:-vehicle_user}"
+      - "-password=${MYSQL_PASSWORD:-vehicle_pass}"
+      - "-connectRetries=60"
+      - "migrate"
+    volumes:
+      - ./database/migrations:/flyway/sql:ro
+    depends_on:
+      vehicle-sales-db:
+        condition: service_healthy
+    networks:
+      - fiap-network
+
+  vehicle-sales-api:
+    build:
+      context: .
+      dockerfile: src/Fiap.Soat.VehicleSales.Api/Dockerfile
+    image: ${DOCKERHUB_USERNAME:-igortessaro}/fiap-soat-vehicle-sales-api:latest
+    container_name: vehicle-sales-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__MySql: "server=vehicle-sales-db;port=3306;database=${MYSQL_DATABASE:-fiap_soat_vehicle_sales};user=${MYSQL_USER:-vehicle_user};password=${MYSQL_PASSWORD:-vehicle_pass};SslMode=None;AllowPublicKeyRetrieval=True;"
+      VehicleManagement__BaseUrl: http://vehicle-management-api:8080/api/v1
+    ports:
+      - "${VEHICLE_SALES_API_PORT:-5002}:8080"
+    depends_on:
+      vehicle-sales-db:
+        condition: service_healthy
+      vehicle-sales-migrations:
+        condition: service_completed_successfully
+      vehicle-management-api:
+        condition: service_started
+    networks:
+      - fiap-network
+
+  payment-gateway:
+    image: igortessaro/fiap-soat-payment-gateway:latest
+    container_name: soat-payment-gateway
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      PaymentGateway__SalesWebhookUrl: http://vehicle-sales-api:8080/api/v1/webhooks/payments
+    ports:
+      - "${PAYMENT_GATEWAY_PORT:-5100}:8080"
+    volumes:
+      - payment_gateway_data:/app/data
+    depends_on:
+      vehicle-sales-api:
+        condition: service_started
+    networks:
+      - fiap-network
 
 networks:
   fiap-network:
-    driver: bridge
+    name: fiap-soat-network
+
+volumes:
+  vehicle_management_mysql_data:
+  vehicle_sales_mysql_data:
+  payment_gateway_data:
