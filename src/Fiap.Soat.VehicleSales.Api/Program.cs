@@ -8,6 +8,7 @@ using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -88,6 +89,7 @@ _ = PaymentGatewayEndpoints.Map(app);
 
 await app.RunAsync();
 
+[ExcludeFromCodeCoverage]
 public partial class Program
 {
     protected Program() { }

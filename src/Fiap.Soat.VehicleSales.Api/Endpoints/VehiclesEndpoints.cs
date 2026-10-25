@@ -11,7 +11,7 @@ public static class VehiclesEndpoints
     {
         var vehiclesApi = app
             .MapGroup("api/v1/vehicles")
-            .AddEndpointFilter<ResponseFilter<VehicleDetail>>()
+            .AddEndpointFilter<ResponseFilter<IReadOnlyList<VehicleDetail>>>()
             .WithTags("Vehicles");
 
         vehiclesApi.MapGet("available", ([FromServices] IVehicleController controller, CancellationToken cancellationToken) =>
