@@ -39,6 +39,7 @@ public sealed class Response<T>(Result<T> result, HttpStatusCode statusCode)
 
 }
 
+[ExcludeFromCodeCoverage]
 public sealed class Response(Result result, HttpStatusCode statusCode)
 {
     [JsonIgnore]
@@ -68,6 +69,7 @@ public sealed class Response(Result result, HttpStatusCode statusCode)
         => result.InnerResult;
 }
 
+[ExcludeFromCodeCoverage]
 public static class ResponseFactory
 {
     public static Response Ok(HttpStatusCode statusCode = HttpStatusCode.OK)

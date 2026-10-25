@@ -20,4 +20,8 @@
         <Using Include="NUnit.Framework"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="../../src/Fiap.Soat.VehicleSales.Domain/Fiap.Soat.VehicleSales.Domain.csproj" />
+    </ItemGroup>
+
 </Project>
