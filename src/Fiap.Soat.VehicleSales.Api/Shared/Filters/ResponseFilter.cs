@@ -9,12 +9,12 @@ public class ResponseFilter<T> : IEndpointFilter
         var result = await next(context);
         if (result is Response<T> { IsSuccess: false } responseTyped)
         {
-            return Results.Json(new { Errors = responseTyped.Reasons }, statusCode: (int)responseTyped.StatusCode);
+            return Results.Json(new { Errors = responseTyped.Reasons }, statusCode: (int) responseTyped.StatusCode);
         }
 
         if (result is Response { IsSuccess: false } response)
         {
-            return Results.Json(new { Errors = response.Reasons }, statusCode: (int)response.StatusCode);
+            return Results.Json(new { Errors = response.Reasons }, statusCode: (int) response.StatusCode);
         }
 
         return result;

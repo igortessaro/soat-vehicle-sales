@@ -1,5 +1,5 @@
-using Fiap.Soat.VehicleSales.Application.Adapters.Gateways.Services;
 using Fiap.Soat.VehicleSales.Application.Adapters.Gateways.Repositories;
+using Fiap.Soat.VehicleSales.Application.Adapters.Gateways.Services;
 using Fiap.Soat.VehicleSales.Domain.Shared;
 using Microsoft.Extensions.Logging;
 using System.Net;
@@ -31,7 +31,7 @@ public sealed class PaymentGatewayService(
             if (response.IsSuccessStatusCode)
                 return ResponseFactory.Ok(response.StatusCode);
 
-            var message = $"Payment gateway returned {(int)response.StatusCode} ({response.ReasonPhrase})";
+            var message = $"Payment gateway returned {(int) response.StatusCode} ({response.ReasonPhrase})";
             logger.LogError(
                 "Failed to create payment for {PaymentCode}. Status code: {StatusCode}",
                 paymentCode,
