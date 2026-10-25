@@ -1,6 +1,7 @@
 using Fiap.Soat.VehicleSales.Application.UseCases.Webhook.Payment;
 using Fiap.Soat.VehicleSales.Domain.Shared;
 using MediatR;
+using System.Net;
 
 namespace Fiap.Soat.VehicleSales.Application.Adapters.Controllers;
 
@@ -11,7 +12,8 @@ public sealed class WebhookController(IMediator mediator) : IWebhookController
         var response = command.Status switch
         {
             PaymentStatus.Paid => await mediator.Send(new PaymentPaidCommand(command.PaymentCode), cancellationToken),
-            PaymentStatus.Canceled => await mediator.Send(new PaymentCanceledCommand(command.PaymentCode), cancellationToken)
+            PaymentStatus.Canceled => await mediator.Send(new PaymentCanceledCommand(command.PaymentCode), cancellationToken),
+            _ => ResponseFactory.Fail($"Payment status {command.Status} is not supported", HttpStatusCode.BadRequest)
         };
         return response;
     }

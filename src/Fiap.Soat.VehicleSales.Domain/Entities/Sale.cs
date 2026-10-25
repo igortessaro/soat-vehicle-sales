@@ -14,9 +14,9 @@ public sealed class Sale : Entity
     }
 
     public Guid VehicleId { get; private set; }
-    public Document BuyerDocument { get; private set; }
+    public Document BuyerDocument { get; private set; } = string.Empty;
     public SaleStatus Status { get; private set; } = SaleStatus.PendingPayment;
-    public string PaymentCode { get; private set; }
+    public string PaymentCode { get; private set; } = string.Empty;
     public DateTime? PaidAt { get; private set; }
     public DateTime? CanceledAt { get; private set; }
 

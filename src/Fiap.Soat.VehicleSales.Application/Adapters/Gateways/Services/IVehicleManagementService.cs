@@ -13,5 +13,3 @@ public interface IVehicleManagementService
     Task<Response<IReadOnlyList<VehicleDetail>>> GetAllAvailableAsync(CancellationToken cancellationToken = default);
     Task<Response<IReadOnlyList<VehicleDetail>>> GetAllSoldAsync(CancellationToken cancellationToken = default);
 }
-
-public record ListVehicleQuery(string? LicensePlate, string? Brand, string? Model, int? Year, string? Color, string? Status);
