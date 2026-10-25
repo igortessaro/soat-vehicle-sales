@@ -10,6 +10,7 @@ public static class ServiceExtensions
     public static IServiceCollection AddServiceExtensions(this IServiceCollection serviceCollection)
     {
         _ = serviceCollection.AddScoped<IVehicleManagementService, VehicleManagementService>();
+        _ = serviceCollection.AddScoped<IPaymentGatewayService, PaymentGatewayService>();
         return serviceCollection;
     }
 }

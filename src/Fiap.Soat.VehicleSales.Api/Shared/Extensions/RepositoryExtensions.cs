@@ -10,6 +10,7 @@ public static class RepositoryExtensions
     public static IServiceCollection AddRepositoryExtensions(this IServiceCollection serviceCollection)
     {
         _ = serviceCollection.AddScoped<ISaleRepository, SaleRepository>();
+        _ = serviceCollection.AddScoped<IPaymentGatewayRepository, PaymentGatewayRepository>();
 
         return serviceCollection;
     }

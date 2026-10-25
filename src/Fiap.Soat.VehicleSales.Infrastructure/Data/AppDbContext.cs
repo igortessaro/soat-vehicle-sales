@@ -9,11 +9,13 @@ namespace Fiap.Soat.VehicleSales.Infrastructure.Data;
 public class AppDbContext(DbContextOptions<AppDbContext> dbContextOptions) : DbContext(dbContextOptions)
 {
     public DbSet<Sale> Sales { get; set; }
+    public DbSet<PaymentGateway> PaymentGateways { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfiguration(new SaleConfiguration());
+        modelBuilder.ApplyConfiguration(new PaymentGatewayConfiguration());
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
