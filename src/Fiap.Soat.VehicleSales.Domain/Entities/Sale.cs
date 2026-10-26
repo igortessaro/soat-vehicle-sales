@@ -24,6 +24,7 @@ public sealed class Sale : Entity
     {
         Status = SaleStatus.Paid;
         PaidAt = DateTime.UtcNow;
+        MarkAsUpdated();
         return this;
     }
 
@@ -31,12 +32,14 @@ public sealed class Sale : Entity
     {
         Status = SaleStatus.Canceled;
         CanceledAt = DateTime.UtcNow;
+        MarkAsUpdated();
         return this;
     }
 
     public Sale Deliver()
     {
         Status = SaleStatus.Completed;
+        MarkAsUpdated();
         return this;
     }
 }

@@ -46,6 +46,7 @@ public class SaleTests
             Assert.That(result, Is.SameAs(sale));
             Assert.That(sale.Status, Is.EqualTo(SaleStatus.Paid));
             Assert.That(sale.PaidAt, Is.Not.Null.And.GreaterThanOrEqualTo(beforePayment));
+            Assert.That(sale.UpdatedAt, Is.GreaterThanOrEqualTo(beforePayment));
             Assert.That(sale.CanceledAt, Is.Null);
         });
     }
@@ -63,6 +64,7 @@ public class SaleTests
             Assert.That(result, Is.SameAs(sale));
             Assert.That(sale.Status, Is.EqualTo(SaleStatus.Canceled));
             Assert.That(sale.CanceledAt, Is.Not.Null.And.GreaterThanOrEqualTo(beforeCancellation));
+            Assert.That(sale.UpdatedAt, Is.GreaterThanOrEqualTo(beforeCancellation));
             Assert.That(sale.PaidAt, Is.Null);
         });
     }
@@ -71,6 +73,7 @@ public class SaleTests
     public void Deliver_ShouldSetCompletedStatusAndReturnSameSale()
     {
         var sale = CreateSale().Paid();
+        var beforeDelivery = DateTime.UtcNow;
 
         var result = sale.Deliver();
 
@@ -78,6 +81,7 @@ public class SaleTests
         {
             Assert.That(result, Is.SameAs(sale));
             Assert.That(sale.Status, Is.EqualTo(SaleStatus.Completed));
+            Assert.That(sale.UpdatedAt, Is.GreaterThanOrEqualTo(beforeDelivery));
         });
     }
 
