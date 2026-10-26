@@ -21,6 +21,7 @@ public sealed class PaymentWebhookTests : CustomWebApplicationFactory<Program>
         // Act
         var response = await Client.PostAsJsonAsync(Endpoint, new { sale.PaymentCode, Status = "Paid" });
         var persisted = await FindAsync<Sale>(sale.Id);
+        var vehicleCopy = await FindAsync<Vehicle>(sale.VehicleId);
 
         // Assert
         Assert.Multiple(() =>
@@ -28,6 +29,29 @@ public sealed class PaymentWebhookTests : CustomWebApplicationFactory<Program>
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
             Assert.That(persisted!.Status, Is.EqualTo(SaleStatus.Paid));
             Assert.That(persisted.PaidAt, Is.Not.Null);
+            Assert.That(vehicleCopy!.Status, Is.EqualTo(VehicleStatus.Sold));
+        });
+    }
+
+    [Test]
+    public async Task Webhooks_ProcessAsync_WhenTheLocalCopyCannotBeUpdated_ShouldStillMarkSaleAsPaid()
+    {
+        // Arrange: an unknown status makes the copy update fail after the sale was already saved
+        var sale = await SeedAsync(SaleFactory.CreateSale());
+        HttpStub.Setup(HttpMethod.Post, $"{VehicleManagementUrl}/api/v1/internal/vehicles/{sale.VehicleId}/sell", HttpStatusCode.OK,
+            VehicleManagementApiFactory.Success(VehicleManagementApiFactory.Vehicle(sale.VehicleId, "Scrapped")));
+
+        // Act
+        var response = await Client.PostAsJsonAsync(Endpoint, new { sale.PaymentCode, Status = "Paid" });
+        var persisted = await FindAsync<Sale>(sale.Id);
+        var vehicleCopy = await FindAsync<Vehicle>(sale.VehicleId);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(persisted!.Status, Is.EqualTo(SaleStatus.Paid));
+            Assert.That(vehicleCopy, Is.Null);
         });
     }
 
@@ -42,6 +66,7 @@ public sealed class PaymentWebhookTests : CustomWebApplicationFactory<Program>
         // Act
         var response = await Client.PostAsJsonAsync(Endpoint, new { sale.PaymentCode, Status = "Canceled" });
         var persisted = await FindAsync<Sale>(sale.Id);
+        var vehicleCopy = await FindAsync<Vehicle>(sale.VehicleId);
 
         // Assert
         Assert.Multiple(() =>
@@ -49,6 +74,7 @@ public sealed class PaymentWebhookTests : CustomWebApplicationFactory<Program>
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
             Assert.That(persisted!.Status, Is.EqualTo(SaleStatus.Canceled));
             Assert.That(persisted.CanceledAt, Is.Not.Null);
+            Assert.That(vehicleCopy!.Status, Is.EqualTo(VehicleStatus.Available));
         });
     }
 

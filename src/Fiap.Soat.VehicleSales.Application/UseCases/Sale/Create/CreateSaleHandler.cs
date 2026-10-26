@@ -1,6 +1,7 @@
 using Fiap.Soat.VehicleSales.Application.Adapters.Gateways.Repositories;
 using Fiap.Soat.VehicleSales.Application.Adapters.Gateways.Services;
 using Fiap.Soat.VehicleSales.Application.Mappers;
+using Fiap.Soat.VehicleSales.Application.UseCases.Vehicle.Copy;
 using Fiap.Soat.VehicleSales.Domain.Shared;
 using MediatR;
 using System;
@@ -12,7 +13,8 @@ namespace Fiap.Soat.VehicleSales.Application.UseCases.Sale.Create;
 public sealed class CreateSaleHandler(
     ISaleRepository repository,
     IVehicleManagementService vehicleManagementService,
-    IPaymentGatewayService paymentGatewayService)
+    IPaymentGatewayService paymentGatewayService,
+    IPublisher publisher)
     : IRequestHandler<CreateSaleCommand, Response<VehicleSales.Domain.Entities.Sale>>
 {
     public async Task<Response<VehicleSales.Domain.Entities.Sale>> Handle(CreateSaleCommand request, CancellationToken cancellationToken)
@@ -30,6 +32,8 @@ public sealed class CreateSaleHandler(
         var reserveResponse = await vehicleManagementService.ReserveVehicleAsync(request.VehicleId, cancellationToken);
         if (!reserveResponse.IsSuccess)
             return ResponseFactory.Fail<VehicleSales.Domain.Entities.Sale>(reserveResponse.Reasons[0].Message, reserveResponse.StatusCode);
+
+        await publisher.Publish(new VehicleChangedNotification(reserveResponse.Data), cancellationToken);
 
         var sale = await repository.AddAsync(entity, cancellationToken);
 

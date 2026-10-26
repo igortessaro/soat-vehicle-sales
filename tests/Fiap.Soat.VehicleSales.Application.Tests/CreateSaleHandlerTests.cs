@@ -2,8 +2,10 @@ using Fiap.Soat.VehicleSales.Application.Adapters.Gateways.Repositories;
 using Fiap.Soat.VehicleSales.Application.Adapters.Gateways.Services;
 using Fiap.Soat.VehicleSales.Application.Models;
 using Fiap.Soat.VehicleSales.Application.UseCases.Sale.Create;
+using Fiap.Soat.VehicleSales.Application.UseCases.Vehicle.Copy;
 using Fiap.Soat.VehicleSales.Domain.Entities;
 using Fiap.Soat.VehicleSales.Domain.Shared;
+using MediatR;
 using Moq;
 using System.Linq.Expressions;
 using System.Net;
@@ -15,6 +17,7 @@ public class CreateSaleHandlerTests
     private readonly Mock<ISaleRepository> _repository = new();
     private readonly Mock<IVehicleManagementService> _vehicleService = new();
     private readonly Mock<IPaymentGatewayService> _paymentService = new();
+    private readonly Mock<IPublisher> _publisher = new();
     private readonly Guid _vehicleId = Guid.NewGuid();
 
     [SetUp]
@@ -23,6 +26,7 @@ public class CreateSaleHandlerTests
         _repository.Reset();
         _vehicleService.Reset();
         _paymentService.Reset();
+        _publisher.Reset();
     }
 
     [Test]
@@ -114,13 +118,14 @@ public class CreateSaleHandlerTests
             Assert.That(response.Reasons[0].Message, Is.EqualTo("Vehicle is not available"));
         });
         _repository.VerifyNoOtherCalls();
+        _publisher.VerifyNoOtherCalls();
     }
 
     [Test]
     public async Task Handle_WhenPaymentCreationFails_ReturnsFailureWithServiceStatusCode()
     {
         SetupVehicleFound();
-        SetupVehicleReserved();
+        var vehicle = SetupVehicleReserved();
         var sale = SetupSaleAdded();
         _paymentService
             .Setup(x => x.CreatePaymentAsync(sale.PaymentCode, It.IsAny<CancellationToken>()))
@@ -137,6 +142,8 @@ public class CreateSaleHandlerTests
             Assert.That(response.Reasons[0].Message, Is.EqualTo("Gateway unavailable"));
         });
         _repository.Verify(x => x.FindSingleAsync(It.IsAny<Expression<Func<Sale, bool>>>(), It.IsAny<CancellationToken>()), Times.Never);
+        // The vehicle stays reserved in vehicle management, so the copy must reflect it even when the payment fails.
+        _publisher.Verify(x => x.Publish(new VehicleChangedNotification(vehicle), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -165,7 +172,7 @@ public class CreateSaleHandlerTests
     public async Task Handle_WhenRequestIsValid_CreatesSaleAndReturnsReloadedSale()
     {
         SetupVehicleFound();
-        SetupVehicleReserved();
+        var vehicle = SetupVehicleReserved();
         var sale = SetupSaleAdded();
         SetupPaymentCreated(sale);
         var reloaded = ApplicationTestData.CreateSale(vehicleId: _vehicleId);
@@ -187,20 +194,25 @@ public class CreateSaleHandlerTests
             It.IsAny<CancellationToken>()), Times.Once);
         _vehicleService.Verify(x => x.ReserveVehicleAsync(_vehicleId, It.IsAny<CancellationToken>()), Times.Once);
         _paymentService.Verify(x => x.CreatePaymentAsync(sale.PaymentCode, It.IsAny<CancellationToken>()), Times.Once);
+        _publisher.Verify(x => x.Publish(new VehicleChangedNotification(vehicle), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private CreateSaleHandler CreateHandler() =>
-        new(_repository.Object, _vehicleService.Object, _paymentService.Object);
+        new(_repository.Object, _vehicleService.Object, _paymentService.Object, _publisher.Object);
 
     private void SetupVehicleFound() =>
         _vehicleService
             .Setup(x => x.GetAsync(_vehicleId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ResponseFactory.Ok(ApplicationTestData.CreateVehicleDetail()));
 
-    private void SetupVehicleReserved() =>
+    private VehicleDetail SetupVehicleReserved()
+    {
+        var vehicle = ApplicationTestData.CreateVehicleDetail("Reserved");
         _vehicleService
             .Setup(x => x.ReserveVehicleAsync(_vehicleId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ResponseFactory.Ok(ApplicationTestData.CreateVehicleDetail("Reserved")));
+            .ReturnsAsync(ResponseFactory.Ok(vehicle));
+        return vehicle;
+    }
 
     private Sale SetupSaleAdded()
     {
@@ -221,5 +233,6 @@ public class CreateSaleHandlerTests
         _repository.VerifyNoOtherCalls();
         _vehicleService.VerifyNoOtherCalls();
         _paymentService.VerifyNoOtherCalls();
+        _publisher.VerifyNoOtherCalls();
     }
 }

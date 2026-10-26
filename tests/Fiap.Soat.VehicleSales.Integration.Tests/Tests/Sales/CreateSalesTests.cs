@@ -26,6 +26,7 @@ public sealed class CreateSalesTests : CustomWebApplicationFactory<Program>
         var response = await Client.PostAsJsonAsync(Endpoint, new { VehicleId = vehicleId, BuyerDocument = cpf });
         var body = await ReadResponseAsync<SaleDetail>(response);
         var persisted = await FindAsync<Sale>(body.Data.Id);
+        var vehicleCopy = await FindAsync<Vehicle>(vehicleId);
         var paymentRequest = HttpStub.Requests.Single(x => x.Uri.Host == "payment-gateway");
 
         // Assert
@@ -39,6 +40,7 @@ public sealed class CreateSalesTests : CustomWebApplicationFactory<Program>
             Assert.That(persisted!.PaymentCode, Is.EqualTo(body.Data.PaymentCode));
             Assert.That(paymentRequest.Body, Does.Contain(body.Data.PaymentCode));
             Assert.That(HttpStub.Requests.Select(x => x.Uri.AbsolutePath), Does.Contain($"/api/v1/internal/vehicles/{vehicleId}/reserve"));
+            Assert.That(vehicleCopy!.Status, Is.EqualTo(VehicleStatus.Reserved));
         });
     }
 

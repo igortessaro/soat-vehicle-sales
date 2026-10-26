@@ -22,11 +22,13 @@ public sealed class DeliverSalesTests : CustomWebApplicationFactory<Program>
         var response = await Client.PutAsync($"{Endpoint}/{sale.Id}/deliver", null);
         var body = await ReadResponseAsync<SaleDetail>(response);
         var persisted = await FindAsync<Sale>(sale.Id);
+        var vehicleCopy = await FindAsync<Vehicle>(sale.VehicleId);
 
         // Assert
         Assert.Multiple(() =>
         {
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(vehicleCopy!.Status, Is.EqualTo(VehicleStatus.Delivered));
             Assert.That(body.Data.Status, Is.EqualTo(SaleStatus.Completed));
             Assert.That(persisted!.Status, Is.EqualTo(SaleStatus.Completed));
             Assert.That(body.Data.UpdatedAt, Is.GreaterThan(body.Data.CreatedAt));

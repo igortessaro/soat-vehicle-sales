@@ -1,10 +1,12 @@
 using Fiap.Soat.VehicleSales.Application.Adapters.Gateways.Repositories;
 using Fiap.Soat.VehicleSales.Application.Adapters.Gateways.Services;
 using Fiap.Soat.VehicleSales.Application.Models;
+using Fiap.Soat.VehicleSales.Application.UseCases.Vehicle.Copy;
 using Fiap.Soat.VehicleSales.Application.UseCases.Webhook.Payment;
 using Fiap.Soat.VehicleSales.Domain.Entities;
 using Fiap.Soat.VehicleSales.Domain.Shared;
 using Fiap.Soat.VehicleSales.Domain.ValueObjects;
+using MediatR;
 using Moq;
 using System.Net;
 
@@ -15,12 +17,14 @@ public class PaymentHandlerTests
     private const string PaymentCode = "payment-code";
     private readonly Mock<ISaleRepository> _repository = new();
     private readonly Mock<IVehicleManagementService> _vehicleService = new();
+    private readonly Mock<IPublisher> _publisher = new();
 
     [SetUp]
     public void SetUp()
     {
         _repository.Reset();
         _vehicleService.Reset();
+        _publisher.Reset();
     }
 
     [Test]
@@ -57,15 +61,17 @@ public class PaymentHandlerTests
             Assert.That(sale.Status, Is.EqualTo(SaleStatus.PendingPayment));
         });
         _repository.Verify(x => x.UpdateAsync(It.IsAny<Sale>(), It.IsAny<CancellationToken>()), Times.Never);
+        _publisher.Verify(x => x.Publish(It.IsAny<VehicleChangedNotification>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
     public async Task Paid_WhenVehicleIsSold_MarksSaleAsPaid()
     {
         var sale = SetupSale();
+        var vehicle = ApplicationTestData.CreateVehicleDetail("Sold");
         _vehicleService
             .Setup(x => x.SellVehicleAsync(sale.VehicleId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ResponseFactory.Ok(ApplicationTestData.CreateVehicleDetail("Sold")));
+            .ReturnsAsync(ResponseFactory.Ok(vehicle));
 
         var response = await CreateHandler().Handle(new PaymentPaidCommand(PaymentCode), CancellationToken.None);
 
@@ -76,6 +82,7 @@ public class PaymentHandlerTests
             Assert.That(sale.PaidAt, Is.Not.Null);
         });
         _repository.Verify(x => x.UpdateAsync(sale, It.IsAny<CancellationToken>()), Times.Once);
+        _publisher.Verify(x => x.Publish(new VehicleChangedNotification(vehicle), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -112,15 +119,17 @@ public class PaymentHandlerTests
             Assert.That(sale.Status, Is.EqualTo(SaleStatus.PendingPayment));
         });
         _repository.Verify(x => x.UpdateAsync(It.IsAny<Sale>(), It.IsAny<CancellationToken>()), Times.Never);
+        _publisher.Verify(x => x.Publish(It.IsAny<VehicleChangedNotification>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
     public async Task Canceled_WhenVehicleIsReleased_MarksSaleAsCanceled()
     {
         var sale = SetupSale();
+        var vehicle = ApplicationTestData.CreateVehicleDetail();
         _vehicleService
             .Setup(x => x.ReleaseVehicleAsync(sale.VehicleId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ResponseFactory.Ok(ApplicationTestData.CreateVehicleDetail()));
+            .ReturnsAsync(ResponseFactory.Ok(vehicle));
 
         var response = await CreateHandler().Handle(new PaymentCanceledCommand(PaymentCode), CancellationToken.None);
 
@@ -131,9 +140,10 @@ public class PaymentHandlerTests
             Assert.That(sale.CanceledAt, Is.Not.Null);
         });
         _repository.Verify(x => x.UpdateAsync(sale, It.IsAny<CancellationToken>()), Times.Once);
+        _publisher.Verify(x => x.Publish(new VehicleChangedNotification(vehicle), It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    private PaymentHandler CreateHandler() => new(_repository.Object, _vehicleService.Object);
+    private PaymentHandler CreateHandler() => new(_repository.Object, _vehicleService.Object, _publisher.Object);
 
     private Sale SetupSale()
     {
