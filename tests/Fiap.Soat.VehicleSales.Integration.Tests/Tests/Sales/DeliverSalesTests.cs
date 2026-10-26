@@ -29,6 +29,8 @@ public sealed class DeliverSalesTests : CustomWebApplicationFactory<Program>
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
             Assert.That(body.Data.Status, Is.EqualTo(SaleStatus.Completed));
             Assert.That(persisted!.Status, Is.EqualTo(SaleStatus.Completed));
+            Assert.That(body.Data.UpdatedAt, Is.GreaterThan(body.Data.CreatedAt));
+            Assert.That(persisted.UpdatedAt, Is.EqualTo(body.Data.UpdatedAt));
         });
     }
 
