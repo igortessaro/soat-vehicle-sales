@@ -41,7 +41,7 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int) statusCode;
         return statusCode != HttpStatusCode.BadRequest
-            ? context.Response.WriteAsync(JsonSerializer.Serialize(response))
-            : context.Response.WriteAsync(JsonSerializer.Serialize(ResponseFactory.Fail(exception.Message, statusCode)));
+            ? context.Response.WriteAsync(JsonSerializer.Serialize(response), context.RequestAborted)
+            : context.Response.WriteAsync(JsonSerializer.Serialize(ResponseFactory.Fail(exception.Message, statusCode)), context.RequestAborted);
     }
 }

@@ -10,6 +10,9 @@ namespace Fiap.Soat.VehicleSales.Application.Tests;
 
 public class PresentationTests
 {
+    private static readonly string[] PageItems = ["one", "two"];
+    private static readonly int[] ExpectedItemLengths = [3, 3];
+
     [Test]
     public void SalePresenter_MapsSaleToDetail()
     {
@@ -160,14 +163,14 @@ public class PresentationTests
     [Test]
     public void ResponseMapper_MapsPaginatedResponse()
     {
-        var page = new Paginate<string>(new[] { "one", "two" }, 10, 2, 1, 5);
+        var page = new Paginate<string>(PageItems, 10, 2, 1, 5);
 
         var mapped = ResponseMapper.Map(ResponseFactory.Ok(page), value => value.Length);
 
         Assert.Multiple(() =>
         {
             Assert.That(mapped.IsSuccess, Is.True);
-            Assert.That(mapped.Data.Items, Is.EqualTo(new[] { 3, 3 }));
+            Assert.That(mapped.Data.Items, Is.EqualTo(ExpectedItemLengths));
             Assert.That(mapped.Data.TotalCount, Is.EqualTo(10));
             Assert.That(mapped.Data.PageSize, Is.EqualTo(2));
             Assert.That(mapped.Data.CurrentPage, Is.EqualTo(1));
