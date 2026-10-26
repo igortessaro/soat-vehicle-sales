@@ -11,12 +11,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> dbContextOptions) : DbC
 {
     public DbSet<Sale> Sales { get; set; }
     public DbSet<PaymentGateway> PaymentGateways { get; set; }
+    public DbSet<Vehicle> Vehicles { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfiguration(new SaleConfiguration());
         modelBuilder.ApplyConfiguration(new PaymentGatewayConfiguration());
+        modelBuilder.ApplyConfiguration(new VehicleConfiguration());
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

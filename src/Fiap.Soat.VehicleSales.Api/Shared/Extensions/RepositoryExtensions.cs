@@ -12,6 +12,7 @@ public static class RepositoryExtensions
     {
         _ = serviceCollection.AddScoped<ISaleRepository, SaleRepository>();
         _ = serviceCollection.AddScoped<IPaymentGatewayRepository, PaymentGatewayRepository>();
+        _ = serviceCollection.AddScoped<IVehicleRepository, VehicleRepository>();
 
         return serviceCollection;
     }

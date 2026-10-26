@@ -250,9 +250,26 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
+    VEHICLES {
+        char(36) id PK "mesmo id do veículo no management"
+        varchar brand
+        varchar model
+        varchar license_plate
+        int manufacture_year
+        varchar color
+        decimal price
+        varchar status "Available | Reserved | Sold | Delivered"
+        datetime source_created_at "createdAt no management"
+        datetime source_updated_at "updatedAt no management (versão da cópia)"
+        datetime created_at "inserção na cópia local"
+        datetime updated_at "última atualização da cópia local"
+    }
+    SALES }o..|| VEHICLES : "vehicle_id (lógico)"
 ```
 
 `vehicle_id` não tem chave estrangeira, porque o veículo vive em outro banco e só é acessado pela API do serviço de gerenciamento.
+
+A tabela `vehicles` é uma **cópia somente leitura** dos veículos do management. Uma atualização só é aplicada se o `updatedAt` recebido for mais novo que o `source_updated_at` salvo, então entregas repetidas ou fora de ordem não sobrescrevem dados mais recentes. O management continua sendo a fonte da verdade: a venda sempre consulta e reserva o veículo nele.
 
 ## Como executar localmente
 
@@ -318,9 +335,9 @@ dotnet test Fiap.Soat.VehicleSales.slnx --settings coverlet.runsettings \
 
 | Projeto de testes | Escopo | Testes |
 | --- | --- | --- |
-| `Domain.Tests` | `Sale`, `PaymentGateway`, validação de CPF/CNPJ (`Document`) | 31 |
+| `Domain.Tests` | `Sale`, `PaymentGateway`, `Vehicle` (cópia local), validação de CPF/CNPJ (`Document`) | 36 |
 | `Application.Tests` | Handlers, controllers, presenters e mappers (dependências mockadas) | 61 |
-| `Infrastructure.Tests` | Repositórios (EF Core InMemory) e clientes HTTP (handler HTTP falso) | 53 |
+| `Infrastructure.Tests` | Repositórios (EF Core InMemory) e clientes HTTP (handler HTTP falso) | 60 |
 | `Api.Tests` | Endpoints (TestHost), filtro, middleware, health check | 35 |
 | `Integration.Tests` | API completa via `WebApplicationFactory` + EF InMemory, com gerenciamento e gateway simulados por stub HTTP | 27 |
 
