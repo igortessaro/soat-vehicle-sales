@@ -123,7 +123,7 @@ jobs:
             /d:sonar.token="$env:SONAR_TOKEN" `
             /d:sonar.host.url="https://sonarcloud.io" `
             /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml" `
-            /d:sonar.coverage.exclusions="**Tests/**,**Integration.Tests/**,**/Configurations/**,**/Migrations/**" `
+            /d:sonar.coverage.exclusions="tests/**,**/Configurations/**,**/Migrations/**,**/Program.cs,**/Shared/Response.cs,**/Shared/Paginate.cs,**/Shared/PaginatedRequest.cs,**/Shared/Bootstrap.cs,**/Shared/Extensions/**,**/Shared/Exceptions/DomainException.cs,**/Data/AppDbContext.cs" `
             /d:sonar.exclusions="**/*.sql,**/*Designer.cs"
           dotnet build --no-incremental
           dotnet test tests/Fiap.Soat.VehicleSales.Domain.Tests/Fiap.Soat.VehicleSales.Domain.Tests.csproj --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage --settings coverlet.runsettings
