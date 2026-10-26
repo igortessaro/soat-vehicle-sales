@@ -4,6 +4,10 @@ namespace Fiap.Soat.VehicleSales.Domain.Entities;
 
 public class Entity
 {
+    public Entity() { }
+
+    protected Entity(Guid id) => Id = id;
+
     public Guid Id { get; }
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
