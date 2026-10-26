@@ -109,7 +109,7 @@ jobs:
           key: ${{ runner.os }}-sonar-scanner
           restore-keys: ${{ runner.os }}-sonar-scanner
       - name: Install Sonar Scanner
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
         shell: powershell
         run: |
           New-Item -Path .\.sonar\scanner -ItemType Directory -Force
@@ -122,7 +122,7 @@ jobs:
             /o:"igortessaro" `
             /d:sonar.token="$env:SONAR_TOKEN" `
             /d:sonar.host.url="https://sonarcloud.io" `
-            /d:sonar.cs.opencover.reportsPaths="coverage/**/*.xml" `
+            /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml" `
             /d:sonar.coverage.exclusions="**Tests/**,**Integration.Tests/**,**/Configurations/**,**/Migrations/**" `
             /d:sonar.exclusions="**/*.sql,**/*Designer.cs"
           dotnet build --no-incremental
