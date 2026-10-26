@@ -94,7 +94,7 @@ docker-compose.yml                         # Ambiente completo da solução
 ### Decisões principais
 
 - **Banco isolado.** Vendas e gateway ficam em `fiap_soat_vehicle_sales`. O estado do veículo é sempre consultado e alterado pela API do serviço de gerenciamento, nunca direto no banco.
-- **Listagens por proxy HTTP.** `GET /vehicles/available` e `/vehicles/sold` encaminham a consulta ao serviço de gerenciamento, que é a fonte única do estado do veículo. Assim não há uma cópia local para sincronizar.
+- **Listagens a partir de uma cópia local.** `GET /vehicles/available` e `/vehicles/sold` leem a tabela `vehicles` deste serviço, sem chamar o gerenciamento. Assim os picos de acesso às listagens não pesam sobre o serviço principal, e as listagens continuam respondendo se ele estiver fora do ar. A cópia é mantida por sincronização periódica (cadastros e edições) e atualizada na hora pelas transições que o próprio serviço de vendas dispara (reserva, venda, liberação e entrega). O gerenciamento continua sendo a fonte da verdade: a compra sempre consulta e reserva o veículo nele.
 - **Pagamento síncrono com webhook.** Ao criar a venda, o serviço chama o gateway. O gateway decide o resultado e chama o webhook deste serviço **antes** de responder. Por isso, a resposta do `POST /sales` já traz a venda com status final (`Paid` ou `Canceled`).
 - **Gateway configurável.** A URL do processador de pagamento é cadastrada pela API (`/payment-gateways`), e o banco aceita no máximo um registro.
 
@@ -163,11 +163,11 @@ sequenceDiagram
     Sales->>SalesDb: busca a venda
     Sales->>Mgmt: POST /internal/vehicles/{vehicleId}/deliver (Sold → Delivered)
     Sales->>SalesDb: venda → Completed
+    Sales->>SalesDb: cópia local do veículo → Delivered
     Sales-->>Client: 200 venda
 
     Client->>Sales: GET /api/v1/vehicles/available | sold
-    Sales->>Mgmt: GET /api/v1/vehicles/available | sold
-    Mgmt-->>Sales: lista ordenada por preço
+    Sales->>SalesDb: lê a cópia local, ordenada por preço
     Sales-->>Client: 200 lista ordenada por preço
 ```
 
@@ -189,8 +189,8 @@ Todas as rotas usam o prefixo `/api/v1`. A documentação interativa fica em `/s
 
 | Método | Rota | Descrição | Principais respostas |
 | --- | --- | --- | --- |
-| `GET` | `/vehicles/available` | Veículos à venda, do mais barato para o mais caro | `200`, `400` |
-| `GET` | `/vehicles/sold` | Veículos vendidos, do mais barato para o mais caro | `200`, `400` |
+| `GET` | `/vehicles/available` | Veículos à venda, do mais barato para o mais caro (cópia local) | `200` |
+| `GET` | `/vehicles/sold` | Veículos vendidos (`Sold` e `Delivered`), do mais barato para o mais caro (cópia local) | `200` |
 | `POST` | `/sales` | Efetua a venda (`vehicleId`, `buyerDocument`) | `200`, `400`, `502` (gateway com erro), `503` (gateway não cadastrado) |
 | `PUT` | `/sales/{id}/deliver` | Registra a entrega de uma venda paga | `200`, `400` |
 | `POST` | `/webhooks/payments` | Webhook do processador (`paymentCode`, `status`: `PAID`/`CANCELED`) | `200`, `404` |
@@ -349,9 +349,9 @@ dotnet test Fiap.Soat.VehicleSales.slnx --settings coverlet.runsettings \
 | --- | --- | --- |
 | `Domain.Tests` | `Sale`, `PaymentGateway`, `Vehicle` (cópia local), validação de CPF/CNPJ (`Document`) | 36 |
 | `Application.Tests` | Handlers, controllers, presenters e mappers (dependências mockadas) | 73 |
-| `Infrastructure.Tests` | Repositórios (EF Core InMemory) e clientes HTTP (handler HTTP falso) | 65 |
+| `Infrastructure.Tests` | Repositórios (EF Core InMemory) e clientes HTTP (handler HTTP falso) | 59 |
 | `Api.Tests` | Endpoints (TestHost), filtro, middleware, health check, sincronização em segundo plano | 39 |
-| `Integration.Tests` | API completa via `WebApplicationFactory` + EF InMemory, com gerenciamento e gateway simulados por stub HTTP | 30 |
+| `Integration.Tests` | API completa via `WebApplicationFactory` + EF InMemory, com gerenciamento e gateway simulados por stub HTTP | 29 |
 
 Os testes de integração exercitam o fluxo real da aplicação: venda, falhas de reserva e de pagamento, webhook pago/cancelado, entrega, listagens e cadastro do gateway. Os clientes HTTP reais rodam contra um stub, sem rede e sem Docker.
 

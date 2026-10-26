@@ -35,12 +35,6 @@ public sealed class VehicleManagementService(
     public Task<Response<VehicleDetail>> GetAsync(Guid vehicleId, CancellationToken cancellationToken = default) =>
         SendVehicleRequestAsync(vehicleId, "get", HttpMethod.Get, $"/api/v1/vehicles/{vehicleId}", cancellationToken);
 
-    public Task<Response<IReadOnlyList<VehicleDetail>>> GetAllAvailableAsync(CancellationToken cancellationToken = default) =>
-        GetAllVehiclesAsync("/api/v1/vehicles/available", cancellationToken);
-
-    public Task<Response<IReadOnlyList<VehicleDetail>>> GetAllSoldAsync(CancellationToken cancellationToken = default) =>
-        GetAllVehiclesAsync("/api/v1/vehicles/sold", cancellationToken);
-
     public Task<Response<IReadOnlyList<VehicleDetail>>> GetUpdatedSinceAsync(DateTime? updatedSince, CancellationToken cancellationToken = default)
     {
         if (updatedSince is null) return GetAllVehiclesAsync("/api/v1/vehicles", cancellationToken);

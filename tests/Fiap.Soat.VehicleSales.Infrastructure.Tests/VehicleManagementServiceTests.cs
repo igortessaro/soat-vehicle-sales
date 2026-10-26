@@ -97,46 +97,12 @@ public class VehicleManagementServiceTests
             Throws.InvalidOperationException.With.Message.EqualTo("VehicleManagement:BaseUrl not configured"));
     }
 
-    [TestCase("available")]
-    [TestCase("sold")]
-    public async Task GetAll_WhenApiSucceeds_CallsEndpointAndReturnsVehicles(string status)
-    {
-        var handler = StubHttpMessageHandler.Returning(
-            HttpStatusCode.OK, $$"""{"data":[{{VehicleJson}}],"reasons":[],"isSuccess":true}""");
-
-        var response = await ExecuteGetAll(CreateService(handler), status);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(response.IsSuccess, Is.True);
-            Assert.That(response.Data.Single().Id, Is.EqualTo(VehicleId));
-            Assert.That(handler.Requests.Single().Method, Is.EqualTo(HttpMethod.Get));
-            Assert.That(handler.Requests.Single().RequestUri, Is.EqualTo(new Uri($"{BaseUrl}/api/v1/vehicles/{status}")));
-        });
-    }
-
-    [TestCase("available")]
-    [TestCase("sold")]
-    public async Task GetAll_WhenApiReturnsErrorStatus_ReturnsFailure(string status)
-    {
-        var handler = StubHttpMessageHandler.Returning(HttpStatusCode.InternalServerError);
-
-        var response = await ExecuteGetAll(CreateService(handler), status);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(response.IsSuccess, Is.False);
-            Assert.That(response.Reasons[0].Message, Is.EqualTo("Failed to get vehicle. Error: Internal Server Error"));
-        });
-    }
-
-    [TestCase("available")]
-    [TestCase("sold")]
-    public async Task GetAll_WhenApiReturnsNullBody_ReturnsEmptyList(string status)
+    [Test]
+    public async Task GetUpdatedSince_WhenApiReturnsNullBody_ReturnsEmptyList()
     {
         var handler = StubHttpMessageHandler.Returning(HttpStatusCode.OK, "null");
 
-        var response = await ExecuteGetAll(CreateService(handler), status);
+        var response = await CreateService(handler).GetUpdatedSinceAsync(null);
 
         Assert.Multiple(() =>
         {
@@ -145,13 +111,12 @@ public class VehicleManagementServiceTests
         });
     }
 
-    [TestCase("available")]
-    [TestCase("sold")]
-    public void GetAll_WhenBaseUrlIsNotConfigured_Throws(string status)
+    [Test]
+    public void GetUpdatedSince_WhenBaseUrlIsNotConfigured_Throws()
     {
         var service = CreateService(StubHttpMessageHandler.Returning(HttpStatusCode.OK), baseUrl: null);
 
-        Assert.That(async () => await ExecuteGetAll(service, status), Throws.InvalidOperationException);
+        Assert.That(async () => await service.GetUpdatedSinceAsync(null), Throws.InvalidOperationException);
     }
 
     [Test]
@@ -207,9 +172,6 @@ public class VehicleManagementServiceTests
             "deliver" => service.DeliverVehicleAsync(VehicleId),
             _ => service.GetAsync(VehicleId)
         };
-
-    private static Task<Response<IReadOnlyList<VehicleDetail>>> ExecuteGetAll(VehicleManagementService service, string status) =>
-        status == "available" ? service.GetAllAvailableAsync() : service.GetAllSoldAsync();
 
     private static VehicleManagementService CreateService(StubHttpMessageHandler handler, string? baseUrl = BaseUrl)
     {
