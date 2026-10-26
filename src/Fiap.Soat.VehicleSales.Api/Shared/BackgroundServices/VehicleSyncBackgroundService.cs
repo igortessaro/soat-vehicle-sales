@@ -18,17 +18,13 @@ public sealed class VehicleSyncBackgroundService(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(options.Value.IntervalSeconds));
-        try
+        await using var stopTimer = stoppingToken.Register(timer.Dispose);
+        do
         {
-            do
-            {
-                await SyncAsync(stoppingToken);
-            } while (await timer.WaitForNextTickAsync(stoppingToken));
-        }
-        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-        {
-            logger.LogInformation("Vehicle sync stopped");
-        }
+            await SyncAsync(stoppingToken);
+        } while (await timer.WaitForNextTickAsync());
+
+        logger.LogInformation("Vehicle sync stopped");
     }
 
     private async Task SyncAsync(CancellationToken stoppingToken)
@@ -40,7 +36,7 @@ public sealed class VehicleSyncBackgroundService(
             var response = await mediator.Send(new SyncVehiclesCommand(), stoppingToken);
             if (response.IsSuccess)
             {
-                logger.LogDebug("Vehicle sync received {Count} vehicles", response.Data);
+                if (logger.IsEnabled(LogLevel.Debug)) logger.LogDebug("Vehicle sync received {Count} vehicles", response.Data);
                 return;
             }
 
