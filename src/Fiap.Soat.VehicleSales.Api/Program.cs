@@ -43,6 +43,7 @@ _ = builder.Services.AddDbContext<AppDbContext>((options) => options.UseMySql(my
 _ = builder.Services.AddServiceExtensions();
 _ = builder.Services.AddRepositoryExtensions();
 _ = builder.Services.AddUseCases();
+_ = builder.Services.AddBackgroundServiceExtensions(builder.Configuration);
 _ = builder.Services.AddHttpContextAccessor();
 _ = builder.Services.AddHealthChecks()
     .AddCheck<DetailedHealthCheck>("detailed")
