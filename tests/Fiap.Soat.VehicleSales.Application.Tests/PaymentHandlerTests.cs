@@ -6,6 +6,7 @@ using Fiap.Soat.VehicleSales.Domain.Entities;
 using Fiap.Soat.VehicleSales.Domain.Shared;
 using Fiap.Soat.VehicleSales.Domain.ValueObjects;
 using Moq;
+using System.Net;
 
 namespace Fiap.Soat.VehicleSales.Application.Tests;
 
@@ -32,6 +33,7 @@ public class PaymentHandlerTests
         Assert.Multiple(() =>
         {
             Assert.That(response.IsSuccess, Is.False);
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
             Assert.That(response.Reasons[0].Message, Is.EqualTo($"Sale with payment code {PaymentCode} not found"));
         });
         _vehicleService.VerifyNoOtherCalls();
@@ -43,13 +45,14 @@ public class PaymentHandlerTests
         var sale = SetupSale();
         _vehicleService
             .Setup(x => x.SellVehicleAsync(sale.VehicleId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ResponseFactory.Fail<VehicleDetail>("Vehicle is not reserved"));
+            .ReturnsAsync(ResponseFactory.Fail<VehicleDetail>("Vehicle is not reserved", HttpStatusCode.Conflict));
 
         var response = await CreateHandler().Handle(new PaymentPaidCommand(PaymentCode), CancellationToken.None);
 
         Assert.Multiple(() =>
         {
             Assert.That(response.IsSuccess, Is.False);
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
             Assert.That(response.Reasons[0].Message, Is.EqualTo("Vehicle is not reserved"));
             Assert.That(sale.Status, Is.EqualTo(SaleStatus.PendingPayment));
         });
@@ -85,6 +88,7 @@ public class PaymentHandlerTests
         Assert.Multiple(() =>
         {
             Assert.That(response.IsSuccess, Is.False);
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
             Assert.That(response.Reasons[0].Message, Is.EqualTo($"Sale with payment code {PaymentCode} not found"));
         });
         _vehicleService.VerifyNoOtherCalls();
@@ -96,13 +100,14 @@ public class PaymentHandlerTests
         var sale = SetupSale();
         _vehicleService
             .Setup(x => x.ReleaseVehicleAsync(sale.VehicleId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ResponseFactory.Fail<VehicleDetail>("Vehicle cannot be released"));
+            .ReturnsAsync(ResponseFactory.Fail<VehicleDetail>("Vehicle cannot be released", HttpStatusCode.Conflict));
 
         var response = await CreateHandler().Handle(new PaymentCanceledCommand(PaymentCode), CancellationToken.None);
 
         Assert.Multiple(() =>
         {
             Assert.That(response.IsSuccess, Is.False);
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
             Assert.That(response.Reasons[0].Message, Is.EqualTo("Vehicle cannot be released"));
             Assert.That(sale.Status, Is.EqualTo(SaleStatus.PendingPayment));
         });

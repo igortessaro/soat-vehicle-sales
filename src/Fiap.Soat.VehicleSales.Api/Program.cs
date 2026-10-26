@@ -74,7 +74,6 @@ _ = app.UseHttpsRedirection();
 
 _ = app.MapScalarApiReference();
 _ = app.UseMiddleware<ExceptionMiddleware>();
-_ = app.UseHttpsRedirection();
 _ = app.UseAuthorization();
 _ = app.MapControllers();
 _ = app.MapHealthChecks("/health", new HealthCheckOptions

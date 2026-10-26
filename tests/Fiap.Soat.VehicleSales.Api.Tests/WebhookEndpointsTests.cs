@@ -31,4 +31,21 @@ public class WebhookEndpointsTests
             new PaymentCommand("code-123", expectedStatus),
             It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Test]
+    public async Task ProcessPayment_WhenControllerFails_ReturnsResponseStatusCodeAndErrors()
+    {
+        _controller
+            .Setup(x => x.ProcessAsync(It.IsAny<PaymentCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ResponseFactory.Fail("Sale with payment code code-123 not found", HttpStatusCode.NotFound));
+        await using var server = await EndpointTestServer.StartAsync(_controller.Object, WebhookEndpoints.Map);
+
+        var response = await server.Client.PostAsJsonAsync("api/v1/webhooks/payments", new { paymentCode = "code-123", status = "Paid" });
+
+        await Assert.MultipleAsync(async () =>
+        {
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+            Assert.That(await response.Content.ReadAsStringAsync(), Does.Contain("Sale with payment code code-123 not found"));
+        });
+    }
 }
