@@ -322,6 +322,18 @@ VehicleManagement__BaseUrl="http://localhost:5180/api/v1" \
   dotnet run --project src/Fiap.Soat.VehicleSales.Api
 ```
 
+### Configurações
+
+| Chave (variável de ambiente) | Padrão | Descrição |
+| --- | --- | --- |
+| `ConnectionStrings:MySql` (`ConnectionStrings__MySql`) | — | Banco de vendas (obrigatória) |
+| `VehicleManagement:BaseUrl` (`VehicleManagement__BaseUrl`) | — | URL do serviço de gerenciamento |
+| `VehicleSync:Enabled` (`VehicleSync__Enabled`) | `true` | Liga a sincronização periódica da cópia local de veículos |
+| `VehicleSync:IntervalSeconds` (`VehicleSync__IntervalSeconds`) | `10` | Intervalo da sincronização; valores menores ou iguais a zero impedem a aplicação de subir |
+| `Cors:AllowedOrigins` (`Cors__AllowedOrigins__0`, ...) | vazio | Origens liberadas no CORS |
+
+A sincronização roda uma vez logo na subida e depois a cada intervalo. Se o gerenciamento estiver fora do ar, a falha é registrada em log e a próxima execução tenta de novo, sem afetar o restante da API.
+
 ## Como testar
 
 ```bash
@@ -338,7 +350,7 @@ dotnet test Fiap.Soat.VehicleSales.slnx --settings coverlet.runsettings \
 | `Domain.Tests` | `Sale`, `PaymentGateway`, `Vehicle` (cópia local), validação de CPF/CNPJ (`Document`) | 36 |
 | `Application.Tests` | Handlers, controllers, presenters e mappers (dependências mockadas) | 69 |
 | `Infrastructure.Tests` | Repositórios (EF Core InMemory) e clientes HTTP (handler HTTP falso) | 64 |
-| `Api.Tests` | Endpoints (TestHost), filtro, middleware, health check | 35 |
+| `Api.Tests` | Endpoints (TestHost), filtro, middleware, health check, sincronização em segundo plano | 39 |
 | `Integration.Tests` | API completa via `WebApplicationFactory` + EF InMemory, com gerenciamento e gateway simulados por stub HTTP | 29 |
 
 Os testes de integração exercitam o fluxo real da aplicação: venda, falhas de reserva e de pagamento, webhook pago/cancelado, entrega, listagens e cadastro do gateway. Os clientes HTTP reais rodam contra um stub, sem rede e sem Docker.

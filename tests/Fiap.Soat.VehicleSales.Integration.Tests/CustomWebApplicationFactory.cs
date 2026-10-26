@@ -42,6 +42,7 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
         // Program.cs requires a MySQL connection string at startup; it is never used because the DbContext is replaced below.
         builder.UseSetting("ConnectionStrings:MySql", "Server=localhost;Database=integration_tests;User=test;Password=test");
         builder.UseSetting("VehicleManagement:BaseUrl", VehicleManagementUrl);
+        builder.UseSetting("VehicleSync:Enabled", "false");
         builder.ConfigureServices(services =>
         {
             // EF Core 9 keeps the provider configuration in IDbContextOptionsConfiguration, so both registrations must go.
