@@ -89,7 +89,7 @@ public class CreateSaleHandlerTests
         Assert.Multiple(() =>
         {
             Assert.That(response.IsSuccess, Is.False);
-            Assert.That(response.Reasons[0].Message, Does.StartWith("BuyerDocument").And.EndWith("is invalid"));
+            Assert.That(response.Reasons[0].Message, Is.EqualTo("BuyerDocument 12345678900 is invalid"));
         });
         _vehicleService.Verify(x => x.ReserveVehicleAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         _repository.VerifyNoOtherCalls();

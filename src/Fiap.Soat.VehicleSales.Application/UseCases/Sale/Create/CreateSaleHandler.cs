@@ -22,7 +22,7 @@ public sealed class CreateSaleHandler(
 
         var entity = request.ToDomainEntity();
         if (!entity.BuyerDocument.IsValid())
-            return ResponseFactory.Fail<VehicleSales.Domain.Entities.Sale>($"BuyerDocument {entity.BuyerDocument} is invalid");
+            return ResponseFactory.Fail<VehicleSales.Domain.Entities.Sale>($"BuyerDocument {entity.BuyerDocument.Value} is invalid");
 
         var reserveResponse = await vehicleManagementService.ReserveVehicleAsync(request.VehicleId, cancellationToken);
         if (!reserveResponse.IsSuccess)
