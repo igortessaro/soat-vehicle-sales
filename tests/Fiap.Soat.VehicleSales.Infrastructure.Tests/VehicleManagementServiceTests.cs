@@ -154,6 +154,50 @@ public class VehicleManagementServiceTests
         Assert.That(async () => await ExecuteGetAll(service, status), Throws.InvalidOperationException);
     }
 
+    [Test]
+    public async Task GetUpdatedSince_WhenDateIsNotInformed_RequestsEveryVehicle()
+    {
+        var handler = StubHttpMessageHandler.Returning(
+            HttpStatusCode.OK, $$"""{"data":[{{VehicleJson}}],"reasons":[],"isSuccess":true}""");
+
+        var response = await CreateService(handler).GetUpdatedSinceAsync(null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.IsSuccess, Is.True);
+            Assert.That(response.Data.Single().Id, Is.EqualTo(VehicleId));
+            Assert.That(handler.Requests.Single().RequestUri, Is.EqualTo(new Uri($"{BaseUrl}/api/v1/vehicles")));
+        });
+    }
+
+    [TestCase(DateTimeKind.Utc)]
+    [TestCase(DateTimeKind.Unspecified)]
+    public async Task GetUpdatedSince_WhenDateIsInformed_SendsItAsUtcIso8601(DateTimeKind kind)
+    {
+        var handler = StubHttpMessageHandler.Returning(HttpStatusCode.OK, """{"data":[],"reasons":[],"isSuccess":true}""");
+        var updatedSince = new DateTime(2026, 1, 2, 10, 0, 0, kind).AddTicks(1234560);
+
+        await CreateService(handler).GetUpdatedSinceAsync(updatedSince);
+
+        Assert.That(
+            handler.Requests.Single().RequestUri!.Query,
+            Is.EqualTo("?updatedSince=2026-01-02T10%3A00%3A00.1234560Z"));
+    }
+
+    [Test]
+    public async Task GetUpdatedSince_WhenApiReturnsErrorStatus_ReturnsFailure()
+    {
+        var handler = StubHttpMessageHandler.Returning(HttpStatusCode.ServiceUnavailable);
+
+        var response = await CreateService(handler).GetUpdatedSinceAsync(DateTime.UtcNow);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.IsSuccess, Is.False);
+            Assert.That(response.Reasons[0].Message, Is.EqualTo("Failed to get vehicle. Error: Service Unavailable"));
+        });
+    }
+
     private static Task<Response<VehicleDetail>> Execute(VehicleManagementService service, string operation) =>
         operation switch
         {

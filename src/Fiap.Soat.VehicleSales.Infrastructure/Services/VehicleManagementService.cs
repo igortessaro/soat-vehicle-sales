@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
@@ -35,10 +36,17 @@ public sealed class VehicleManagementService(
         SendVehicleRequestAsync(vehicleId, "get", HttpMethod.Get, $"/api/v1/vehicles/{vehicleId}", cancellationToken);
 
     public Task<Response<IReadOnlyList<VehicleDetail>>> GetAllAvailableAsync(CancellationToken cancellationToken = default) =>
-        GetAllVehiclesAsync("available", cancellationToken);
+        GetAllVehiclesAsync("/api/v1/vehicles/available", cancellationToken);
 
     public Task<Response<IReadOnlyList<VehicleDetail>>> GetAllSoldAsync(CancellationToken cancellationToken = default) =>
-        GetAllVehiclesAsync("sold", cancellationToken);
+        GetAllVehiclesAsync("/api/v1/vehicles/sold", cancellationToken);
+
+    public Task<Response<IReadOnlyList<VehicleDetail>>> GetUpdatedSinceAsync(DateTime? updatedSince, CancellationToken cancellationToken = default)
+    {
+        if (updatedSince is null) return GetAllVehiclesAsync("/api/v1/vehicles", cancellationToken);
+        var since = DateTime.SpecifyKind(updatedSince.Value, DateTimeKind.Utc).ToString("O", CultureInfo.InvariantCulture);
+        return GetAllVehiclesAsync($"/api/v1/vehicles?updatedSince={Uri.EscapeDataString(since)}", cancellationToken);
+    }
 
     private async Task<Response<VehicleDetail>> SendVehicleRequestAsync(
         Guid vehicleId, string operation, HttpMethod method, string path, CancellationToken cancellationToken)
@@ -64,13 +72,13 @@ public sealed class VehicleManagementService(
         return ResponseFactory.Ok(result.Data);
     }
 
-    private async Task<Response<IReadOnlyList<VehicleDetail>>> GetAllVehiclesAsync(string status, CancellationToken cancellationToken = default)
+    private async Task<Response<IReadOnlyList<VehicleDetail>>> GetAllVehiclesAsync(string path, CancellationToken cancellationToken = default)
     {
         using var httpClient = CreateClient();
-        using var response = await httpClient.GetAsync($"/api/v1/vehicles/{status}", cancellationToken);
+        using var response = await httpClient.GetAsync(path, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            logger.LogError("Failed to get all {Status} vehicles. Status code: {StatusCode}", status, response.StatusCode);
+            logger.LogError("Failed to get vehicles from {Path}. Status code: {StatusCode}", path, response.StatusCode);
             return ResponseFactory.Fail<IReadOnlyList<VehicleDetail>>($"Failed to get vehicle. Error: {response.ReasonPhrase}");
         }
 

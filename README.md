@@ -336,10 +336,10 @@ dotnet test Fiap.Soat.VehicleSales.slnx --settings coverlet.runsettings \
 | Projeto de testes | Escopo | Testes |
 | --- | --- | --- |
 | `Domain.Tests` | `Sale`, `PaymentGateway`, `Vehicle` (cópia local), validação de CPF/CNPJ (`Document`) | 36 |
-| `Application.Tests` | Handlers, controllers, presenters e mappers (dependências mockadas) | 61 |
-| `Infrastructure.Tests` | Repositórios (EF Core InMemory) e clientes HTTP (handler HTTP falso) | 60 |
+| `Application.Tests` | Handlers, controllers, presenters e mappers (dependências mockadas) | 69 |
+| `Infrastructure.Tests` | Repositórios (EF Core InMemory) e clientes HTTP (handler HTTP falso) | 64 |
 | `Api.Tests` | Endpoints (TestHost), filtro, middleware, health check | 35 |
-| `Integration.Tests` | API completa via `WebApplicationFactory` + EF InMemory, com gerenciamento e gateway simulados por stub HTTP | 27 |
+| `Integration.Tests` | API completa via `WebApplicationFactory` + EF InMemory, com gerenciamento e gateway simulados por stub HTTP | 29 |
 
 Os testes de integração exercitam o fluxo real da aplicação: venda, falhas de reserva e de pagamento, webhook pago/cancelado, entrega, listagens e cadastro do gateway. Os clientes HTTP reais rodam contra um stub, sem rede e sem Docker.
 
