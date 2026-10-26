@@ -118,7 +118,7 @@ jobs:
         shell: powershell
         run: |
           .\.sonar\scanner\dotnet-sonarscanner begin `
-            /k:"igortessaro_fiap-soat-oficina-mecanica" `
+            /k:"igortessaro_soat-vehicle-sales" `
             /o:"igortessaro" `
             /d:sonar.token="$env:SONAR_TOKEN" `
             /d:sonar.host.url="https://sonarcloud.io" `
