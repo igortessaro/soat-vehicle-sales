@@ -16,4 +16,5 @@ public interface IVehicleManagementService
     Task<Response<VehicleDetail>> GetAsync(Guid vehicleId, CancellationToken cancellationToken = default);
     Task<Response<IReadOnlyList<VehicleDetail>>> GetAllAvailableAsync(CancellationToken cancellationToken = default);
     Task<Response<IReadOnlyList<VehicleDetail>>> GetAllSoldAsync(CancellationToken cancellationToken = default);
+    Task<Response<IReadOnlyList<VehicleDetail>>> GetUpdatedSinceAsync(DateTime? updatedSince, CancellationToken cancellationToken = default);
 }
