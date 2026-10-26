@@ -1,5 +1,6 @@
 using Fiap.Soat.VehicleSales.Domain.Shared;
 using MediatR;
+using System;
 
 namespace Fiap.Soat.VehicleSales.Application.UseCases.PaymentGateway.Update;
 

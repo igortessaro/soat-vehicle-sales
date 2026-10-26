@@ -3,6 +3,9 @@ using Fiap.Soat.VehicleSales.Application.Adapters.Gateways.Services;
 using Fiap.Soat.VehicleSales.Application.Mappers;
 using Fiap.Soat.VehicleSales.Domain.Shared;
 using MediatR;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Fiap.Soat.VehicleSales.Application.UseCases.Sale.Create;
 

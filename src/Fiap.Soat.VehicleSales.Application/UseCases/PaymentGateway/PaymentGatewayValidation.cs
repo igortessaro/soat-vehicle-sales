@@ -1,3 +1,5 @@
+using System;
+
 namespace Fiap.Soat.VehicleSales.Application.UseCases.PaymentGateway;
 
 internal static partial class PaymentGatewayValidation

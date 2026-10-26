@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Fiap.Soat.VehicleSales.Domain.Shared;

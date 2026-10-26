@@ -5,9 +5,14 @@ using Fiap.Soat.VehicleSales.Api.Shared.Middlewares;
 using Fiap.Soat.VehicleSales.Application.Shared;
 using Fiap.Soat.VehicleSales.Infrastructure.Data;
 using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Scalar.AspNetCore;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 

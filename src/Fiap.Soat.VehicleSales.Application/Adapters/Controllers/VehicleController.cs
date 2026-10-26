@@ -2,6 +2,9 @@ using Fiap.Soat.VehicleSales.Application.Models;
 using Fiap.Soat.VehicleSales.Application.UseCases.Vehicle.List;
 using Fiap.Soat.VehicleSales.Domain.Shared;
 using MediatR;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Fiap.Soat.VehicleSales.Application.Adapters.Controllers;
 

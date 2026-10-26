@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Fiap.Soat.VehicleSales.Domain.Shared;
 
 public interface IPaginate<out T>

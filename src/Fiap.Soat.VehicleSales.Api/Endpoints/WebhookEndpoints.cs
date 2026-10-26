@@ -1,7 +1,10 @@
 using Fiap.Soat.VehicleSales.Api.Shared.Filters;
 using Fiap.Soat.VehicleSales.Application.Adapters.Controllers;
 using Fiap.Soat.VehicleSales.Application.UseCases.Webhook.Payment;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading;
 
 namespace Fiap.Soat.VehicleSales.Api.Endpoints;
 

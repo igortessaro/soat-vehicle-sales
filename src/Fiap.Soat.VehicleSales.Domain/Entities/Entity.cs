@@ -1,3 +1,5 @@
+using System;
+
 namespace Fiap.Soat.VehicleSales.Domain.Entities;
 
 public class Entity

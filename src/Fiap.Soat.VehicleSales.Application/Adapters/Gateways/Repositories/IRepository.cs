@@ -1,6 +1,11 @@
 using Fiap.Soat.VehicleSales.Domain.Shared;
+using System;
+using System.Collections.Generic;
 using System.Data.Common;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Fiap.Soat.VehicleSales.Application.Adapters.Gateways.Repositories;
 

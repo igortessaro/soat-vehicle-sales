@@ -2,8 +2,13 @@ using Fiap.Soat.VehicleSales.Application.Adapters.Gateways.Repositories;
 using Fiap.Soat.VehicleSales.Domain.Entities;
 using Fiap.Soat.VehicleSales.Domain.Shared;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
 using System.Data.Common;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Fiap.Soat.VehicleSales.Infrastructure.Repositories;
 

@@ -1,5 +1,6 @@
 using Fiap.Soat.VehicleSales.Application.Adapters.Gateways.Services;
 using Fiap.Soat.VehicleSales.Infrastructure.Services;
+using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Fiap.Soat.VehicleSales.Api.Shared.Extensions;

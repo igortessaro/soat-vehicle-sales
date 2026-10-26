@@ -2,8 +2,12 @@ using Fiap.Soat.VehicleSales.Application.Adapters.Gateways.Repositories;
 using Fiap.Soat.VehicleSales.Application.Adapters.Gateways.Services;
 using Fiap.Soat.VehicleSales.Domain.Shared;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Fiap.Soat.VehicleSales.Infrastructure.Services;
 

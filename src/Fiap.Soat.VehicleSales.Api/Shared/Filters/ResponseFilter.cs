@@ -1,4 +1,6 @@
 using Fiap.Soat.VehicleSales.Domain.Shared;
+using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
 
 namespace Fiap.Soat.VehicleSales.Api.Shared.Filters;
 

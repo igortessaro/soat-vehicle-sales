@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace Fiap.Soat.VehicleSales.Domain.ValueObjects;
 
 public record Document

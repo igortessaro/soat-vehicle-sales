@@ -1,3 +1,5 @@
+using System;
+
 namespace Fiap.Soat.VehicleSales.Application.Models;
 
 public sealed record PaymentGatewayDetail(

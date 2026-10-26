@@ -1,6 +1,7 @@
 using Fiap.Soat.VehicleSales.Domain.Entities;
 using Fiap.Soat.VehicleSales.Infrastructure.Configurations;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Fiap.Soat.VehicleSales.Infrastructure.Data;

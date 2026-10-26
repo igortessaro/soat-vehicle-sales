@@ -1,3 +1,5 @@
+using System;
+
 namespace Fiap.Soat.VehicleSales.Api.Shared.Exceptions;
 
 public class ResourceNotFoundException : Exception

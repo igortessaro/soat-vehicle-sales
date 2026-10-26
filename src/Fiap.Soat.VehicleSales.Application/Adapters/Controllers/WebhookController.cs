@@ -2,6 +2,8 @@ using Fiap.Soat.VehicleSales.Application.UseCases.Webhook.Payment;
 using Fiap.Soat.VehicleSales.Domain.Shared;
 using MediatR;
 using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Fiap.Soat.VehicleSales.Application.Adapters.Controllers;
 

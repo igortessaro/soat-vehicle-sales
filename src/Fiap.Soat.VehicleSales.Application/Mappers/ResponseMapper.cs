@@ -1,4 +1,6 @@
 using Fiap.Soat.VehicleSales.Domain.Shared;
+using System;
+using System.Linq;
 
 namespace Fiap.Soat.VehicleSales.Application.Mappers;
 

@@ -1,6 +1,7 @@
 using Fiap.Soat.VehicleSales.Application.Models;
 using Fiap.Soat.VehicleSales.Domain.Shared;
 using MediatR;
+using System.Collections.Generic;
 
 namespace Fiap.Soat.VehicleSales.Application.UseCases.Vehicle.List;
 

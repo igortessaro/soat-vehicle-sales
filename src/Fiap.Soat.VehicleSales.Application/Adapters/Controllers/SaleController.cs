@@ -5,6 +5,9 @@ using Fiap.Soat.VehicleSales.Application.UseCases.Sale.Create;
 using Fiap.Soat.VehicleSales.Application.UseCases.Sale.Deliver;
 using Fiap.Soat.VehicleSales.Domain.Shared;
 using MediatR;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Fiap.Soat.VehicleSales.Application.Adapters.Controllers;
 
