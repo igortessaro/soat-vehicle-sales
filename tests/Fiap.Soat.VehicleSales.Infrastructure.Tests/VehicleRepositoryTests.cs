@@ -1,5 +1,9 @@
+using Fiap.Soat.VehicleSales.Domain.Entities;
 using Fiap.Soat.VehicleSales.Domain.ValueObjects;
+using Fiap.Soat.VehicleSales.Infrastructure.Data;
 using Fiap.Soat.VehicleSales.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Fiap.Soat.VehicleSales.Infrastructure.Tests;
 
@@ -119,6 +123,45 @@ public class VehicleRepositoryTests
         Assert.That(result, Is.EqualTo(SourceUpdatedAt.AddHours(2)));
     }
 
+    [Test]
+    public async Task UpsertAsync_WhenSavingFails_DetachesTheVehicleSoTheNextSaveIsNotAffected()
+    {
+        var failOnce = new FailingSaveInterceptor();
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .AddInterceptors(failOnce)
+            .Options;
+        await using var context = new AppDbContext(options);
+        var vehicles = new VehicleRepository(context);
+        var sales = new SaleRepository(context);
+
+        Assert.That(
+            async () => await vehicles.UpsertAsync(CreateSnapshot(), CancellationToken.None),
+            Throws.InstanceOf<DbUpdateException>());
+        var sale = await sales.AddAsync(new Sale(Guid.NewGuid(), InfrastructureTestFixture.ValidDocument), CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(context.ChangeTracker.Entries<Vehicle>(), Is.Empty);
+            Assert.That(context.Sales.Single().Id, Is.EqualTo(sale.Id));
+            Assert.That(context.Vehicles.Count(), Is.Zero);
+        });
+    }
+
     private static VehicleSnapshot CreateSnapshot(VehicleStatus status = VehicleStatus.Available, decimal price = 120000m) =>
         new(Guid.NewGuid(), "Toyota", "Corolla", "ABC1D23", 2024, "Black", price, status, SourceUpdatedAt.AddDays(-1), SourceUpdatedAt);
+
+    private sealed class FailingSaveInterceptor : SaveChangesInterceptor
+    {
+        private bool _failed;
+
+        public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
+            DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
+        {
+            if (_failed) return base.SavingChangesAsync(eventData, result, cancellationToken);
+
+            _failed = true;
+            throw new DbUpdateException("Duplicate entry");
+        }
+    }
 }

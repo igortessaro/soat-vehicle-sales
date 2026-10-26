@@ -16,9 +16,17 @@ public sealed class VehicleRepository(AppDbContext appDbContext) : Repository<Ve
     public async Task<Vehicle> UpsertAsync(VehicleSnapshot snapshot, CancellationToken cancellationToken)
     {
         var vehicle = await GetByIdAsync(snapshot.Id, cancellationToken);
-        if (vehicle is null) return await AddAsync(new Vehicle(snapshot), cancellationToken);
+        try
+        {
+            if (vehicle is null) return await AddAsync(new Vehicle(snapshot), cancellationToken);
 
-        return vehicle.ApplySnapshot(snapshot) ? await UpdateAsync(vehicle, cancellationToken) : vehicle;
+            return vehicle.ApplySnapshot(snapshot) ? await UpdateAsync(vehicle, cancellationToken) : vehicle;
+        }
+        catch
+        {
+            DetachVehicle(snapshot.Id);
+            throw;
+        }
     }
 
     public async Task<IReadOnlyList<Vehicle>> ListByStatusAsync(IReadOnlyCollection<VehicleStatus> statuses, CancellationToken cancellationToken) =>
@@ -29,4 +37,12 @@ public sealed class VehicleRepository(AppDbContext appDbContext) : Repository<Ve
 
     public Task<DateTime?> GetLatestSourceUpdatedAtAsync(CancellationToken cancellationToken) =>
         Query().MaxAsync(x => (DateTime?) x.SourceUpdatedAt, cancellationToken);
+
+    private void DetachVehicle(Guid id)
+    {
+        foreach (var entry in appDbContext.ChangeTracker.Entries<Vehicle>().Where(entry => entry.Entity.Id == id))
+        {
+            entry.State = EntityState.Detached;
+        }
+    }
 }
