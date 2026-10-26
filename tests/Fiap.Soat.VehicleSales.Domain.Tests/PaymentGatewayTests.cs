@@ -23,6 +23,7 @@ public class PaymentGatewayTests
     public void Update_ShouldReplaceValuesAndReturnSameGateway()
     {
         var gateway = new PaymentGateway("Mercado Pago", "https://gateway.com");
+        var beforeUpdate = DateTime.UtcNow;
 
         var result = gateway.Update("PagSeguro", "https://pagseguro.com/");
 
@@ -31,6 +32,7 @@ public class PaymentGatewayTests
             Assert.That(result, Is.SameAs(gateway));
             Assert.That(gateway.Name, Is.EqualTo("PagSeguro"));
             Assert.That(gateway.BaseUrl, Is.EqualTo("https://pagseguro.com"));
+            Assert.That(gateway.UpdatedAt, Is.GreaterThanOrEqualTo(beforeUpdate));
         });
     }
 }

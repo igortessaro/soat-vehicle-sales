@@ -17,6 +17,7 @@ public sealed class PaymentGateway : Entity
     {
         Name = name;
         BaseUrl = baseUrl.TrimEnd('/');
+        MarkAsUpdated();
         return this;
     }
 }

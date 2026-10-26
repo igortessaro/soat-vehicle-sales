@@ -19,5 +19,5 @@ public class AppDbContext(DbContextOptions<AppDbContext> dbContextOptions) : DbC
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.LogTo(Console.WriteLine).EnableSensitiveDataLogging().AddInterceptors(UpdatedAtInterceptor.Instance);
+        => optionsBuilder.LogTo(Console.WriteLine).EnableSensitiveDataLogging();
 }
