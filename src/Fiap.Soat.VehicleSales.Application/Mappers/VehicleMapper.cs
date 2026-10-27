@@ -1,5 +1,6 @@
 using Fiap.Soat.VehicleSales.Application.Models;
 using Fiap.Soat.VehicleSales.Domain.ValueObjects;
+using System;
 
 namespace Fiap.Soat.VehicleSales.Application.Mappers;
 

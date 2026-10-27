@@ -2,6 +2,9 @@ using Fiap.Soat.VehicleSales.Application.Adapters.Gateways.Repositories;
 using Fiap.Soat.VehicleSales.Application.Mappers;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Fiap.Soat.VehicleSales.Application.UseCases.Vehicle.Copy;
 

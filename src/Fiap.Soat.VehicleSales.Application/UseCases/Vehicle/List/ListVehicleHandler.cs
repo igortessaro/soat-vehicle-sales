@@ -4,6 +4,10 @@ using Fiap.Soat.VehicleSales.Application.Models;
 using Fiap.Soat.VehicleSales.Domain.Shared;
 using Fiap.Soat.VehicleSales.Domain.ValueObjects;
 using MediatR;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Fiap.Soat.VehicleSales.Application.UseCases.Vehicle.List;
 

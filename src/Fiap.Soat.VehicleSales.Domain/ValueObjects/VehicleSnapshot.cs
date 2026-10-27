@@ -1,3 +1,5 @@
+using System;
+
 namespace Fiap.Soat.VehicleSales.Domain.ValueObjects;
 
 public sealed record VehicleSnapshot(
